@@ -3,6 +3,8 @@
 #include <iostream>
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyGL.h"
+#include "cyCodeBase/cyTriMesh.h"
+#include "cyCodeBase/cyMatrix.h"
 
 GLfloat bg[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 const char* window_name = "Utah Teapot";
@@ -58,14 +60,8 @@ void init_glut_and_glew(int argc, char** argv)
 	glutIdleFunc(idle);
 }
 
-void init_points()
+void init_points_from_mesh(cy::TriMesh& mesh)
 {
-	cy::Vec3f points[3] = {
-		cy::Vec3f(-0.5f, -0.5f, 0.0f),
-		cy::Vec3f(0.5f, -0.5f, 0.0f),
-		cy::Vec3f(0.0f, 0.5f, 0.0f)
-	};
-
 	// Create vertex array object
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -75,7 +71,7 @@ void init_points()
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
 
 	// Load the shaders with cy calls
 	cy::GLSLProgram program;
@@ -96,12 +92,16 @@ int main(int argc, char** argv)
 	{
 		return 1;
 	}
-	
-	char *filename = argv[1];
+	cy::TriMesh mesh;
+	bool success = mesh.LoadFromFileObj(filename);
+	if (!success)
+	{
+		std::cerr << "Error loading file: " << filename << std::endl;
+		return 1;
+	}
 
-	// Let's just render a simple triangle for now. 
 	init_glut_and_glew(argc, argv);
-	init_points();
+	init_points_from_mesh(mesh);
 	glutMainLoop();
 	return 0;
 }
