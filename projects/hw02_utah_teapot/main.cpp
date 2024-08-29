@@ -1,14 +1,15 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
+#include "cyCodeBase/cyMatrix.h"
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyGL.h"
 #include "cyCodeBase/cyTriMesh.h"
-#include "cyCodeBase/cyMatrix.h"
 
 GLfloat bg[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 const char* window_name = "Utah Teapot";
 const char* filename;
+int n_points = 0;
 
 // function to close the window when escape is pressed
 void keyboard(unsigned char key, int x, int y)
@@ -23,7 +24,7 @@ void render(void)
 {
 	glClearColor(bg[0], bg[1], bg[2], bg[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_POINTS, 0, n_points);
 	glutSwapBuffers();
 }
 
@@ -62,6 +63,7 @@ void init_glut_and_glew(int argc, char** argv)
 
 void init_points_from_mesh(cy::TriMesh& mesh)
 {
+	n_points = mesh.NV();
 	// Create vertex array object
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -76,13 +78,27 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 	// Load the shaders with cy calls
 	cy::GLSLProgram program;
 	bool shader_comp_success = program.BuildFiles("shader.vert", "shader.frag");
+	cy::Matrix4f scale_matrix = cy::Matrix4f(
+		0.05f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.05f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.05f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
 	program.Bind();
 
+	// Setting the uniform. The below code should be the same as the cy function
+	// 
+	// GLint mvp_location = glGetUniformLocation(program.GetID(), "mvp");
+	// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, scale_matrix.cell);
+	program["mvp"] = scale_matrix;
+
 	// Getting position into the vertex shader. The below code should be the same as the cy function
+	// 
 	//GLuint pos = glGetAttribLocation(program.GetID(), "position");
 	//glEnableVertexAttribArray(pos);
 	//glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 	program.SetAttribBuffer("position", vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
 
 }
 
