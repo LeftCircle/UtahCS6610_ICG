@@ -36,8 +36,13 @@ void idle(void)
 	float gl_time = glutGet(GLUT_ELAPSED_TIME);
 	float dt = (gl_time - scene.previous_frame_time) / 100.0f;
 	scene.previous_frame_time = gl_time;
-	scene.rotation_matrix = scene.rotation_matrix * cy::Matrix4f::Identity().RotationZ(DEG2RAD(3.0 * dt));
-	scene.set_mvp_matrix();
+	//scene.rotation_matrix = scene.rotation_matrix * cy::Matrix4f::Identity().RotationZ(DEG2RAD(3.0 * dt));
+	//scene.set_mvp_matrix();
+	//scene.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(3.0 * dt)) * scene.view_matrix;
+	//scene.program["mvp"] = scene.projection_matrix * scene.view_matrix;
+	
+	scene.camera.rotateZ(3.0 * dt);
+	scene.program["mvp"] = scene.projection_matrix * scene.camera.view_matrix;
 	glutPostRedisplay();
 }
 
@@ -72,7 +77,15 @@ void init_glut_and_glew(int argc, char** argv)
 void init_points_from_mesh(cy::TriMesh& mesh)
 {
 	scene.n_points = mesh.NV();
-	//cyMeshExtension::center_mesh(mesh);
+
+	/*std::vector<cy::Vec4f> vertices;
+	for (int i = 0; i < mesh.NV(); i++)
+	{
+		vertices.push_back(cy::Vec4f(mesh.V(i), 1.0f));
+	}*/
+
+
+
 	// Create vertex array object
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -83,6 +96,8 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
+	// Trying with vec4s and divide by w in the shader
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec4f) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
@@ -90,30 +105,19 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
-	scene.projection_matrix.SetPerspective(DEG2RAD(scene.FOV), aspect_ratio, 0.0f, 20.0f);
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, -3.0f, -2.0f);
+	
+	scene.projection_matrix.SetPerspective(DEG2RAD(scene.FOV), aspect_ratio, 0.0f, 10.0f);
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, -38.0f, -14.0f);
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
 	cy::Vec3f up = cy::Vec3f(1.0, 0.0, 0.0).Cross(target - camera_pos);
-	scene.view_matrix.SetView(camera_pos, target, up);
-	//scene.set_perspective_matrix(scene.FOV, aspect_ratio, 0.0f, 20.0f);
-	//scene.rotation_matrix.SetRotationX(DEG2RAD(-90.0f));
-	scene.scale_matrix.SetScale(0.05f);
-	scene.translation_matrix.SetTranslation(cy::Vec3f(0.0f, 0.0f, 0.0f));
-	
-	// Setting the uniform. The below code should be the same as the cy function
-	// 
-	// GLint mvp_location = glGetUniformLocation(program.GetID(), "mvp");
-	// glUniformMatrix4fv(mvp_location, 1, GL_FALSE, scale_matrix.cell);
-	scene.set_mvp_matrix();
+	//scene.view_matrix.SetView(camera_pos, target, up);
+	scene.camera.lookat(camera_pos, target, up);
 
-	// Getting position into the vertex shader. The below code should be the same as the cy function
-	// 
-	//GLuint pos = glGetAttribLocation(program.GetID(), "position");
-	//glEnableVertexAttribArray(pos);
-	//glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-	scene.program.SetAttribBuffer("position", vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	
+	// Just set the mvp with look at and then perspective projection
+	scene.program["mvp"] = scene.projection_matrix * scene.camera.view_matrix;
 
+	scene.program.SetAttribBuffer("position", vao, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//scene.program.SetAttribBuffer("position", vao, 4, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 int main(int argc, char** argv)
