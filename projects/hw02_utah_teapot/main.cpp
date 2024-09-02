@@ -6,12 +6,57 @@
 #include "cyCodeBase/cyGL.h"
 #include "cyCodeBase/cyTriMesh.h"
 #include "cyHelpers.h"
+#include <iostream>
 
 #define DEG2RAD(x) (x * 3.14159265359f / 180.0f)
 
 const char* filename;
 GLScene scene;
 
+
+// OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
+
+void mouse_motion(int x, int y)
+{
+	int button = glutGetModifiers();
+	if (button == GLUT_LEFT_BUTTON)
+	{
+		// change theta by the x movement and phi by the y movement
+		int dx = x - scene.mouse_position.x;
+		int dy = y - scene.mouse_position.y;
+		int old_x = scene.mouse_position.x;
+
+		// Up direction should rotate by phi
+		
+		float new_theta = scene.camera.theta + dy;
+		float new_phi = scene.camera.phi + dx;
+		scene.camera.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(dx)) * cy::Matrix4f::RotationX(DEG2RAD(dy)) * scene.camera.view_matrix;
+		//scene.camera.set_spherical_position(scene.camera.radius, scene.camera.theta, new_phi);
+		scene.mouse_position.Set(x, y);
+	}
+	glutPostRedisplay();
+}
+
+void mouse_buttons(int button, int state, int x, int y)
+{
+	// store the mouse position when the left button is pressed
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		scene.mouse_position.Set(x, y);
+	}
+	// adjust the radius of the camera based on the mouse wheel
+	if (button == 3)
+	{
+		scene.camera.radius -= 0.1f;
+		scene.camera.set_spherical_position(scene.camera.radius, scene.camera.theta, scene.camera.phi);
+	}
+	if (button == 4)
+	{
+		scene.camera.radius += 0.1f;
+		scene.camera.set_spherical_position(scene.camera.radius, scene.camera.theta, scene.camera.phi);
+	}
+	glutPostRedisplay();
+}
 
 // function to close the window when escape is pressed
 void keyboard(unsigned char key, int x, int y)
@@ -27,6 +72,7 @@ void render(void)
 	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_POINTS, 0, scene.n_points);
+	scene.set_mvp();
 	glutSwapBuffers();
 }
 
@@ -41,9 +87,9 @@ void idle(void)
 	//scene.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(3.0 * dt)) * scene.view_matrix;
 	//scene.program["mvp"] = scene.projection_matrix * scene.view_matrix;
 	
-	scene.camera.rotateZ(3.0 * dt);
-	scene.program["mvp"] = scene.projection_matrix * scene.camera.view_matrix;
-	glutPostRedisplay();
+	//scene.camera.rotateZ(3.0 * dt);
+	//scene.program["mvp"] = scene.projection_matrix * scene.camera.view_matrix;
+	//glutPostRedisplay();
 }
 
 bool _are_command_arguments_valid_or_debug(int argc, char** argv)
@@ -72,6 +118,8 @@ void init_glut_and_glew(int argc, char** argv)
 	glutKeyboardFunc(keyboard);
 	glutDisplayFunc(render);
 	glutIdleFunc(idle);
+	glutMouseFunc(mouse_buttons);
+	glutMotionFunc(mouse_motion);
 }
 
 void init_points_from_mesh(cy::TriMesh& mesh)
@@ -107,7 +155,7 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
 	
 	scene.projection_matrix.SetPerspective(DEG2RAD(scene.FOV), aspect_ratio, 0.0f, 10.0f);
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, -38.0f, -14.0f);
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 30.0f);
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
 	cy::Vec3f up = cy::Vec3f(1.0, 0.0, 0.0).Cross(target - camera_pos);
 	//scene.view_matrix.SetView(camera_pos, target, up);
