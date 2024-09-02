@@ -30,8 +30,9 @@ void mouse_motion(int x, int y)
 		
 		float new_theta = scene.camera.theta + dy;
 		float new_phi = scene.camera.phi + dx;
-		scene.camera.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(dx)) * cy::Matrix4f::RotationX(DEG2RAD(dy)) * scene.camera.view_matrix;
-		//scene.camera.set_spherical_position(scene.camera.radius, scene.camera.theta, new_phi);
+		//scene.camera.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(dx)) * cy::Matrix4f::RotationX(DEG2RAD(dy)) * scene.camera.view_matrix;
+		scene.camera.set_spherical_position(scene.camera.radius, new_theta, new_phi);
+		
 		scene.mouse_position.Set(x, y);
 	}
 	glutPostRedisplay();
