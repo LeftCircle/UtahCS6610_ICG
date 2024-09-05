@@ -9,8 +9,10 @@ namespace rc{
 
 class Camera
 {
+private:
+	cy::Vec3f _og_up = cy::Vec3f(0, 1, 0);
 public:
-	cy::Vec3f position = cy::Vec3f(0, 0, 10);
+	cy::Vec3f position = cy::Vec3f(0, 0, 60);
 	cy::Vec3f target = cy::Vec3f(0, 0, 0);
 	cy::Matrix4f view_matrix;
 	cy::Matrix4f projection_matrix;
@@ -22,6 +24,7 @@ public:
 	//! Rotates the position of the camera by theta about the up vector and phi about the tangent vector
 	//! while continuing to look at the target. 
 	void rotate(float t, float p);
+	void rotate_about_og_up(float t, float p);
 	void zoom(float z);
 	
 	cy::Vec3f get_up_vector();

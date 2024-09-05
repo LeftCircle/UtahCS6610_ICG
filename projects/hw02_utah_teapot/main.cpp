@@ -5,10 +5,13 @@
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyGL.h"
 #include "cyCodeBase/cyTriMesh.h"
-#include "cyHelpers.h"
+#include "rcCodeBase/rcCamera.hpp"
+#include "rcCodeBase/rcOpenGLScene.hpp"
+#include "rcCodeBase/rcCore.hpp"
 #include <iostream>
 
-#define DEG2RAD(x) (x * 3.14159265359f / 180.0f)
+
+using namespace rc;
 
 const char* filename;
 GLScene scene;
@@ -21,20 +24,10 @@ void mouse_motion(int x, int y)
 	int button = glutGetModifiers();
 	if (button == GLUT_LEFT_BUTTON)
 	{
-		// change theta by the x movement and phi by the y movement
 		int dx = x - scene.mouse_position.x;
 		int dy = y - scene.mouse_position.y;
-		int old_x = scene.mouse_position.x;
-
-		// Up direction should rotate by phi
-		
-		float new_theta = scene.camera.theta - dx;
-		float new_phi = scene.camera.phi - dy;
-		//scene.camera.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(dx)) * cy::Matrix4f::RotationX(DEG2RAD(dy)) * scene.camera.view_matrix;
-		//scene.camera.set_spherical_position(scene.camera.radius, new_theta, 0);
-		//scene.camera.setfutureview(scene.camera.radius, new_theta, new_phi);
-		//scene.camera.rotate(new_theta, new_phi);
-		scene.camera.rotate(-dx, -dy);
+	
+		scene.camera.rotate_about_og_up(-dx, -dy);
 		scene.mouse_position.Set(x, y);
 	}
 	glutPostRedisplay();
@@ -46,18 +39,15 @@ void mouse_buttons(int button, int state, int x, int y)
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		scene.mouse_position.Set(x, y);
-		//scene.camera.set_spherical_position(scene.camera.radius, 0, 180);
 	}
 	// adjust the radius of the camera based on the mouse wheel
 	if (button == 3)
 	{
-		scene.camera.radius -= 0.1f;
-		scene.camera.set_spherical_position(scene.camera.radius, scene.camera.theta, scene.camera.phi);
+		scene.camera.zoom(-5.0f);
 	}
 	if (button == 4)
 	{
-		scene.camera.radius += 0.1f;
-		scene.camera.set_spherical_position(scene.camera.radius, scene.camera.theta, scene.camera.phi);
+		scene.camera.zoom(5.0f);
 	}
 	glutPostRedisplay();
 }
@@ -82,18 +72,7 @@ void render(void)
 
 void idle(void)
 {
-	// rotate the teapot around the y axis with respect to time
-	float gl_time = glutGet(GLUT_ELAPSED_TIME);
-	float dt = (gl_time - scene.previous_frame_time) / 100.0f;
-	scene.previous_frame_time = gl_time;
-	//scene.rotation_matrix = scene.rotation_matrix * cy::Matrix4f::Identity().RotationZ(DEG2RAD(3.0 * dt));
-	//scene.set_mvp_matrix();
-	//scene.view_matrix = cy::Matrix4f::RotationY(DEG2RAD(3.0 * dt)) * scene.view_matrix;
-	//scene.program["mvp"] = scene.projection_matrix * scene.view_matrix;
-	
-	//scene.camera.rotateZ(3.0 * dt);
-	//scene.program["mvp"] = scene.projection_matrix * scene.camera.view_matrix;
-	//glutPostRedisplay();
+
 }
 
 bool _are_command_arguments_valid_or_debug(int argc, char** argv)
@@ -148,26 +127,13 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
+	scene.camera.set_perspective_projection(DEG2RAD(90), aspect_ratio, 0.0f, 30.0f);
 	
-	scene.projection_matrix.SetPerspective(DEG2RAD(scene.FOV), aspect_ratio, 0.0f, 10.0f);
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 60.0f); // Looking at the top of the teapot with the spout to the right (positive x)
-	cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 600.0f, 0.0f); // Looking at the top of the teapot with the spout to the right (positive x)
+	cy::Vec3f up = cy::Vec3f(0.0, 0.0, 1.0);
 	
-	//cy::Vec3f camera_pos = cy::Vec3f(0.0f, -60.0f, 0.0f);
-	//cy::Vec3f up = cy::Vec3f(0.0, 0.0, 1.0);
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
-
-	//cy::Vec4f up4 = cy::Vec4f(up.x, up.y, up.z, 1.0f);
-	//cy::Vec4f pos4 = cy::Vec4f(camera_pos.x, camera_pos.y, camera_pos.z, 1.0f);
-	////up4 = cy::Matrix4f::RotationY(DEG2RAD(90.0f)) * up4;
-	//pos4 = cy::Matrix4f::RotationY(DEG2RAD(90.0f)) * pos4;
-	//up = cy::Vec3f(up4.x, up4.y, up4.z);
-	//camera_pos = cy::Vec3f(pos4.x, pos4.y, pos4.z);
-
-	//scene.camera.init(camera_pos, target, up);
-	//scene.camera.lookat(camera_pos, target, up);
-	//scene.camera.target = target;
-	//scene.camera.set_spherical_position(60, 0, 0);
+	scene.camera.lookat(camera_pos, target, up);
 
 	scene.set_mvp();
 
