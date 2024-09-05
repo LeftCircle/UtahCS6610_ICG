@@ -61,6 +61,16 @@ void keyboard(unsigned char key, int x, int y)
 	}
 }
 
+void fn_keyboard(int key, int x, int y)
+{
+	if (key == GLUT_KEY_F6)
+	{
+		std::cout << "Recompiling shaders" << std::endl;
+		scene.program.BuildFiles("shader.vert", "shader.frag");
+		glutPostRedisplay();
+	}
+}
+
 void render(void)
 {
 	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
@@ -104,6 +114,7 @@ void init_glut_and_glew(int argc, char** argv)
 	glutIdleFunc(idle);
 	glutMouseFunc(mouse_buttons);
 	glutMotionFunc(mouse_motion);
+	glutSpecialFunc(fn_keyboard);
 }
 
 void init_points_from_mesh(cy::TriMesh& mesh)
@@ -123,21 +134,33 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 	
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
-	scene.program.Bind();
+	scene.program.Bind();	
 
+	scene.program.SetAttribBuffer("position", vao, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	// Rotate the points to sit on the +y axis
+	scene.point_transform = cy::Matrix4f::RotationX(-PI_OVER_2);
+
+	// Center the object using the bounding box
+	mesh.ComputeBoundingBox();
+	cy::Vec3f bounding_box_center = (mesh.GetBoundMin() + mesh.GetBoundMax()) / 2.0f;
+	bounding_box_center = cy::Vec3f(cy::Matrix4f::RotationX(-PI_OVER_2) * bounding_box_center);
+	scene.point_transform.AddTranslation(-bounding_box_center);
+}
+
+void init_camera()
+{
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
 	scene.camera.set_perspective_projection(DEG2RAD(90), aspect_ratio, 0.0f, 30.0f);
-	
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 600.0f, 0.0f); // Looking at the top of the teapot with the spout to the right (positive x)
-	cy::Vec3f up = cy::Vec3f(0.0, 0.0, 1.0);
-	
+
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 1200.0f);
+	cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
+
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
 	scene.camera.lookat(camera_pos, target, up);
 
 	scene.set_mvp();
-
-	scene.program.SetAttribBuffer("position", vao, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 int main(int argc, char** argv)
@@ -156,6 +179,7 @@ int main(int argc, char** argv)
 
 	init_glut_and_glew(argc, argv);
 	init_points_from_mesh(mesh);
+	init_camera();
 	glutMainLoop();
 	return 0;
 }

@@ -18,12 +18,13 @@ public:
 	float previous_frame_time = 0.0f;
 	rc::Camera camera;
 	cy::IVec2i mouse_position = cy::IVec2i(0, 0);
+	cy::Matrix4f point_transform = cy::Matrix4f::Identity();
 
 	int n_points = 0;
 
 	void set_mvp()
 	{
-		program["mvp"] = camera.projection_matrix * camera.view_matrix;
+		program["mvp"] = camera.projection_matrix * camera.view_matrix * point_transform;
 	}
 };
 #endif // !RC_OPENGL_SCENE_HPP
