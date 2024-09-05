@@ -20,6 +20,7 @@ public:
 	cy::IVec2i mouse_position = cy::IVec2i(0, 0);
 	cy::Matrix4f point_transform = cy::Matrix4f::Identity();
 
+	int n_elemts = 0;
 	int n_points = 0;
 
 	void set_mvp()

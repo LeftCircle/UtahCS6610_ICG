@@ -76,6 +76,7 @@ void render(void)
 	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_POINTS, 0, scene.n_points);
+	//glDrawElements(GL_TRIANGLES, scene.n_elemts, GL_UNSIGNED_INT, 0);
 	scene.set_mvp();
 	glutSwapBuffers();
 }
@@ -137,7 +138,26 @@ void init_points_from_mesh(cy::TriMesh& mesh)
 	scene.program.Bind();	
 
 	scene.program.SetAttribBuffer("position", vao, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	// TODO -> 
+	// I think we will also have a vbo (Or is it vertex buffer objects?) for normals and texture coordinates
+	// Also need an elements array and element buffer that shows what vertices are used for each triangle?
 
+	// Must make sure all indeces for positions, normals, and texture coordinates are in the same order
+	// duplicate vertices that have different normals or texture coordinates
+	// If we have one vertex that gets a normal for one triangle and a normal for another, we need to duplicate said vertex.
+	/*GLuint ebuffer;
+	glGenBuffers(1, &ebuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);*/
+	
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh.NF() * 3, &mesh.F(0), GL_STATIC_DRAW);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
+
+	// Then we have to draw the elements and specify the number of vertices
+	//glDrawElements(GL_TRIANGLES, mesh.NF() * 3, GL_UNSIGNED_INT, 0);
+	
+	
+	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
 	scene.point_transform = cy::Matrix4f::RotationX(-PI_OVER_2);
 
