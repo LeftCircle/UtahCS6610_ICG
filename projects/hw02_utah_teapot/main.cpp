@@ -8,6 +8,7 @@
 #include "rcCodeBase/rcCamera.hpp"
 #include "rcCodeBase/rcOpenGLScene.hpp"
 #include "rcCodeBase/rcCore.hpp"
+#include "rcCodeBase/rcObjModifier.h"
 #include <iostream>
 
 
@@ -75,8 +76,7 @@ void render(void)
 {
 	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
-	glDrawArrays(GL_POINTS, 0, scene.n_points);
-	//glDrawElements(GL_TRIANGLES, scene.n_elemts, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
 	scene.set_mvp();
 	glutSwapBuffers();
 }
@@ -118,43 +118,46 @@ void init_glut_and_glew(int argc, char** argv)
 	glutSpecialFunc(fn_keyboard);
 }
 
-void init_points_from_mesh(cy::TriMesh& mesh)
+void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 {
 	scene.n_points = mesh.NV();
+	scene.n_elements = mesh.NE();
 
 	// Create vertex array object
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-
-	// Create vertex buffer object
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
 	
+	GLuint v_vbo;
+	GLuint vn_vbo;
+	GLuint vt_vbo;
+	GLuint ebuffer;
+
+	glGenBuffers(1, &v_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.V_vbo(0), GL_STATIC_DRAW);
+
+	/*glGenBuffers(1, &vn_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VN_vbo(0), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &vt_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);*/
+
+	glGenBuffers(1, &ebuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
+
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
 	scene.program.Bind();	
 
-	scene.program.SetAttribBuffer("position", vao, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	// TODO -> 
-	// I think we will also have a vbo (Or is it vertex buffer objects?) for normals and texture coordinates
-	// Also need an elements array and element buffer that shows what vertices are used for each triangle?
-
-	// Must make sure all indeces for positions, normals, and texture coordinates are in the same order
-	// duplicate vertices that have different normals or texture coordinates
-	// If we have one vertex that gets a normal for one triangle and a normal for another, we need to duplicate said vertex.
-	/*GLuint ebuffer;
-	glGenBuffers(1, &ebuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);*/
+	scene.program.SetAttribBuffer("position", v_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh.NF() * 3, &mesh.F(0), GL_STATIC_DRAW);
-
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-
-	// Then we have to draw the elements and specify the number of vertices
-	//glDrawElements(GL_TRIANGLES, mesh.NF() * 3, GL_UNSIGNED_INT, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
 	
 	
 	// Some final point transformations 
@@ -189,13 +192,14 @@ int main(int argc, char** argv)
 	{
 		return 1;
 	}
-	cy::TriMesh mesh;
+	rc::rcTriMeshForGL mesh;
 	bool success = mesh.LoadFromFileObj(filename);
 	if (!success)
 	{
 		std::cerr << "Error loading file: " << filename << std::endl;
 		return 1;
 	}
+	mesh.create_vbo_data_and_elements();
 
 	init_glut_and_glew(argc, argv);
 	init_points_from_mesh(mesh);

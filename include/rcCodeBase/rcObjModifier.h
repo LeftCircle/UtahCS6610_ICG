@@ -66,6 +66,19 @@ protected:
 
 public:
 	rcTriMeshForGL() { cyTriMesh(); };
+	
+
+	unsigned int get_n_elements() { return n_elements; }
+	unsigned int get_vbo_size() { return vbo_size; }
+	unsigned int NE() const { return n_elements; }	//!< returns the number of elements
+	
+	int const & E(int i) const { return elements[i]; }		//!< returns the i^th element
+	int& E(int i) { return elements[i]; }		//!< returns the i^th element
+	
+	cy::Vec3f const& V_vbo(int i) const { return v_vbo[i]; }		//!< returns the i^th vertex
+	cy::Vec3f const& VN_vbo(int i) const { return vn_vbo[i]; }	//!< returns the i^th vertex normal
+	cy::Vec3f const& VT_vbo(int i) const { return vt_vbo[i]; }	//!< returns the i^th vertex texture
+
 
 	void create_vbo_data_and_elements()
 	{
@@ -127,13 +140,6 @@ public:
 	void SetNumElements(unsigned int n) { Allocate(n, elements, n_elements); };
 	// Checks to see if we need to allocate data by checking vbo first. If the size is different then also allocate for vn and vt
 	void SetVBOSize(unsigned int n) { if (Allocate(n, v_vbo, vbo_size) == false) return; Allocate(n, vn_vbo); Allocate(n, vt_vbo); };
-
-	int get_n_elements() { return n_elements; }
-	int get_vbo_size() { return vbo_size; }
-	cy::Vec3f const &  V_vbo(int i) const { return v_vbo[i]; }		//!< returns the i^th vertex
-	cy::Vec3f const &  VN_vbo(int i) const { return vn_vbo[i]; }	//!< returns the i^th vertex normal
-	cy::Vec3f const &  VT_vbo(int i) const { return vt_vbo[i]; }	//!< returns the i^th vertex texture
-	int const &  E(int i) const { return elements[i]; }		//!< returns the i^th elemen
 };
 
 } // namespace rc
