@@ -121,6 +121,7 @@ public:
 		memcpy(v_vbo, _v_vbo.data(), sizeof(cy::Vec3f) * _v_vbo.size());
 		memcpy(vn_vbo, _vn_vbo.data(), sizeof(cy::Vec3f) * _vn_vbo.size());
 		memcpy(vt_vbo, _vt_vbo.data(), sizeof(cy::Vec3f) * _vt_vbo.size());
+		memcpy(elements, _elements.data(), sizeof(int) * _elements.size());
 	}
 
 	void SetNumElements(unsigned int n) { Allocate(n, elements, n_elements); };

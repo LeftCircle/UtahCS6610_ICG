@@ -3,10 +3,26 @@
 #include "rcCodeBase/rcObjModifier.h"
 #include <string>
 #include <format>
+#include <cwchar>
 
 const char* test_file_path = "E:\\Programming\\OpenGL\\Projects\\ICG_Utah\\Tests\\test_objs\\simple_obj.obj";
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+
+// Defining a ToString function for the cy::Vec3f class so that we can use it in the Assert::AreEqual function
+namespace Microsoft {
+	namespace VisualStudio {
+		namespace CppUnitTestFramework {
+			template<> std::wstring ToString<cy::Vec3<float>>(const cy::Vec3<float>& v)
+			{
+				wchar_t buffer[100];
+				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f", v.x, v.y, v.z);
+				return std::wstring(buffer);
+			}
+		}
+	}
+}
 
 namespace Tests
 {
@@ -31,7 +47,7 @@ public:
 			cy::Vec3f(12, 0, 0),
 			cy::Vec3f(10, 1, 0),
 			cy::Vec3f(0, 0, 0),
-			cy::Vec3f(-1, 0, 0)
+			cy::Vec3f(0, -1, 0)
 		};
 
 		cy::Vec3f expected_vbo_normals[expected_vbo_size] = {
@@ -71,28 +87,31 @@ public:
 		// check that the vbo's and elements match by looping through each element and ensuring they are the same
 		cy::Vec3f v_vbo0 = test_tri_mesh.V_vbo(0);
 		cy::Vec3f expected_vbo0 = expected_vbo_vertices[0];
+		wchar_t error_msg[100];
 		for (int i = 0; i < expected_vbo_size; i++)
-		{
+		{	
+			// Vertex Coordinates
+			cy::Vec3f a_v = test_tri_mesh.V_vbo(i);
+			cy::Vec3f e_v = expected_vbo_vertices[i];
+			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Vertex mismatch at index %d", i);
+			Assert::AreEqual(e_v, a_v, error_msg);
+
+			// Normals
+			cy::Vec3f a_n = test_tri_mesh.VN_vbo(i);
+			cy::Vec3f e_n = expected_vbo_normals[i];
+			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Normal mismatch at index %d", i);
+			Assert::AreEqual(e_n, a_n, error_msg);
 			
-			bool vertex_match = test_tri_mesh.V_vbo(i) == expected_vbo_vertices[i];
-			bool normal_match = test_tri_mesh.VN_vbo(i) == expected_vbo_normals[i];
-			bool texcoord_match = test_tri_mesh.VT_vbo(i) == expected_vbo_texcoords[i];
-			if (!vertex_match)
-			{
-				std::string vertex_msg = std::format("Vertex mismatch at index {}", i);
-				std::string actual_vertex = std::format("Actual: {} {} {}", test_tri_mesh.V_vbo(i).x, test_tri_mesh.V_vbo(i).y, test_tri_mesh.V_vbo(i).z);
-				std::string expected_vertex = std::format("Expected: {} {} {}", expected_vbo_vertices[i].x, expected_vbo_vertices[i].y, expected_vbo_vertices[i].z);
-				Logger::WriteMessage(vertex_msg.c_str());
-				Logger::WriteMessage(actual_vertex.c_str());
-				Logger::WriteMessage(expected_vertex.c_str());
-			}
-			Assert::IsTrue(vertex_match);
-			Assert::IsTrue(normal_match);
-			Assert::IsTrue(texcoord_match);
+			// Texture Coordinates
+			cy::Vec3f a_t = test_tri_mesh.VT_vbo(i);
+			cy::Vec3f e_t = expected_vbo_texcoords[i];
+			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Texture Coordinate mismatch at index %d", i);
+			Assert::AreEqual(e_t, a_t, error_msg);
 		}
 		for (int i = 0; i < expected_element_buffer_size; i++)
 		{
-			Assert::IsTrue(test_tri_mesh.E(i) == expected_element_buffer[i]);
+			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Element mismatch at index %d. Expected: %d Actual: %d", i, expected_element_buffer[i], test_tri_mesh.E(i));
+			Assert::AreEqual(expected_element_buffer[i], test_tri_mesh.E(i), error_msg);
 		}
 	}
 }; // class Tests
