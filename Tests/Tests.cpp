@@ -1,6 +1,12 @@
 #include "pch.h"
 #include "CppUnitTest.h"
+// rc codebase includes
 #include "rcCodeBase/rcObjModifier.h"
+#include "rcCodeBase/rcOpenGLScene.hpp"
+
+// cy codebase includes
+#include "cyCodeBase/cyVector.h"
+#include "cyCodeBase/cyMatrix.h"
 #include <string>
 #include <format>
 #include <cwchar>
@@ -18,6 +24,22 @@ namespace Microsoft {
 			{
 				wchar_t buffer[100];
 				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f", v.x, v.y, v.z);
+				return std::wstring(buffer);
+			}
+
+			// Define a ToString function for the cy::Matrix3f class
+			template<> std::wstring ToString<cy::Matrix3<float>>(const cy::Matrix3<float>& m)
+			{
+				wchar_t buffer[100];
+				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f\n%.2f, %.2f, %.2f\n%.2f, %.2f, %.2f", m(0, 0), m(0, 1), m(0, 2), m(1, 0), m(1, 1), m(1, 2), m(2, 0), m(2, 1), m(2, 2));
+				return std::wstring(buffer);
+			}
+
+			// Define a ToString function for the cy::Matrix4f class
+			template<> std::wstring ToString<cy::Matrix4<float>>(const cy::Matrix4<float>& m)
+			{
+				wchar_t buffer[100];
+				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f", m(0, 0), m(0, 1), m(0, 2), m(0, 3), m(1, 0), m(1, 1), m(1, 2), m(1, 3), m(2, 0), m(2, 1), m(2, 2), m(2, 3), m(3, 0), m(3, 1), m(3, 2), m(3, 3));
 				return std::wstring(buffer);
 			}
 		}
@@ -115,4 +137,42 @@ public:
 		}
 	}
 }; // class Tests
+
+TEST_CLASS(TESTrcOpenGLScene)
+{
+public:
+	TEST_METHOD(TESTNormalMatrixIsInverseScaleOfPointMV) 
+	{
+		// Check that there is a model-view, model-view-projection, and model-view-normal matrix
+		rc::GLScene test_scene;
+		// Initialize the camera
+		test_scene.camera.set_perspective_projection(DEG2RAD(90), 1.0f, 0.0f, 30.0f);
+		cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 1200.0f);
+		cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
+
+		cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
+		test_scene.camera.lookat(camera_pos, target, up);
+		test_scene.point_transform.SetScale(cy::Vec3f(1.0f, 2.0f, 3.0f));
+		test_scene.point_transform.SetRotationX(-PI_OVER_2);
+		
+		test_scene.set_mvp();
+		cy::Matrix4f& mvp = test_scene.MVP();
+		cy::Matrix4f& mv_points = test_scene.MV_points();
+		cy::Matrix3f& mv_normals = test_scene.MV_normals();
+		bool is_mvp_identity = mvp == cy::Matrix4f::Identity();
+		Assert::IsFalse(is_mvp_identity, L"MVP matrix should not be identity");
+		Assert::IsFalse(mv_points == cy::Matrix4f::Identity(), L"MV_points matrix should not be identity");
+		Assert::IsFalse(mv_normals == cy::Matrix3f::Identity(), L"MV_normals matrix should not be identity");
+
+		cy::Matrix3f expected_normals(mv_points);
+		expected_normals.Invert();
+		expected_normals.Transpose();
+
+		Assert::AreEqual(expected_normals, mv_normals, L"Normal matrix is not the inverse of the point matrix");
+		Assert::AreNotEqual(mv_points, mvp, L"Point matrix is the same as the MVP matrix");
+	}
+
+	// Test the normal matrix is the inverse of the point matrix
+	 
+};
 } // namespace Tests

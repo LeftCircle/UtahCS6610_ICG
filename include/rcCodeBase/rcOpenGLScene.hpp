@@ -7,10 +7,22 @@
 #include "rcCodeBase/rcCamera.hpp"
 #include "cyCodeBase/cyGL.h"
 
-
+namespace rc
+{
 class GLScene
 {
+protected:
+	cy::Matrix4f mvp = cy::Matrix4f::Identity();
+	cy::Matrix4f mv_points = cy::Matrix4f::Identity();
+	cy::Matrix3f mv_normals = cy::Matrix3f::Identity();
 public:
+	cy::Matrix4f const & MVP() const { return mvp; }
+	cy::Matrix4f& MVP() { return mvp; }
+	cy::Matrix4f const & MV_points() const { return mv_points; }
+	cy::Matrix4f& MV_points() { return mv_points; }
+	cy::Matrix3f const & MV_normals() const { return mv_normals; }
+	cy::Matrix3f& MV_normals() { return mv_normals; }
+
 	GLfloat bg[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	const char* window_name = "Window Name";
 	cy::GLSLProgram program;
@@ -25,7 +37,13 @@ public:
 
 	void set_mvp()
 	{
-		program["mvp"] = camera.projection_matrix * camera.view_matrix * point_transform;
+		mvp = camera.projection_matrix * camera.view_matrix * point_transform;
+		mv_points = camera.view_matrix * point_transform;
+		mv_normals = mv_points.GetSubMatrix3();
+		mv_normals.Invert();
+		mv_normals.Transpose();
 	}
+
 };
+}; // namespace rc
 #endif // !RC_OPENGL_SCENE_HPP

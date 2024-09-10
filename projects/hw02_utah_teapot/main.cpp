@@ -78,6 +78,7 @@ void render(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
 	scene.set_mvp();
+	scene.program["mvp"] = scene.MVP();
 	glutSwapBuffers();
 }
 
@@ -184,6 +185,7 @@ void init_camera()
 	scene.camera.lookat(camera_pos, target, up);
 
 	scene.set_mvp();
+	scene.program["mvp"] = scene.MVP();
 }
 
 int main(int argc, char** argv)
