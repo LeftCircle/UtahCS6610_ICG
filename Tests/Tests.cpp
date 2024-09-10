@@ -81,8 +81,8 @@ public:
 		rc::rcTriMeshForGL test_tri_mesh;
 		test_tri_mesh.LoadFromFileObj(test_file_path);
 		test_tri_mesh.create_vbo_data_and_elements();
-		Assert::AreEqual(expected_element_buffer_size, test_tri_mesh.get_n_elements());
-		Assert::AreEqual(test_tri_mesh.get_vbo_size(), expected_vbo_size);
+		Assert::AreEqual(expected_element_buffer_size, int(test_tri_mesh.get_n_elements()));
+		Assert::AreEqual(int(test_tri_mesh.get_vbo_size()), expected_vbo_size);
 
 		// check that the vbo's and elements match by looping through each element and ensuring they are the same
 		cy::Vec3f v_vbo0 = test_tri_mesh.V_vbo(0);
