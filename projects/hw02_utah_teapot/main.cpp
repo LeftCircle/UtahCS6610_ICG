@@ -16,6 +16,7 @@ using namespace rc;
 
 const char* filename;
 GLScene scene;
+bool use_elements = false;
 
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
@@ -44,11 +45,11 @@ void mouse_buttons(int button, int state, int x, int y)
 	// adjust the radius of the camera based on the mouse wheel
 	if (button == 3)
 	{
-		scene.camera.zoom(-5.0f);
+		scene.camera.zoom(-1.0f);
 	}
 	if (button == 4)
 	{
-		scene.camera.zoom(5.0f);
+		scene.camera.zoom(1.0f);
 	}
 	glutPostRedisplay();
 }
@@ -72,11 +73,23 @@ void fn_keyboard(int key, int x, int y)
 	}
 }
 
+void _draw_arrays_or_elements()
+{
+	if (use_elements)
+	{
+		glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
+	}
+	else
+	{
+		glDrawArrays(GL_TRIANGLES, 0, scene.n_points * 6);
+	}
+}
+
 void render(void)
 {
 	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	_draw_arrays_or_elements();
 	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
@@ -104,7 +117,7 @@ bool _are_command_arguments_valid_or_debug(int argc, char** argv)
 void init_glut_and_glew(int argc, char** argv)
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glEnable(GL_DEPTH_TEST);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("Utah Teapot");
@@ -120,7 +133,8 @@ void init_glut_and_glew(int argc, char** argv)
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 {
-	scene.n_points = mesh.NV();
+	//scene.n_points = mesh.NV();
+	scene.n_points = mesh.NF() * 3;
 	scene.n_elements = mesh.NE();
 
 	// Create vertex array object
@@ -145,10 +159,12 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	//glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &ebuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
-
+	if (use_elements)
+	{
+		glGenBuffers(1, &ebuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
+	}
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
 	scene.program.Bind();	
@@ -156,9 +172,7 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.program.SetAttribBuffer("position", v_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-	
+		
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
 	scene.point_transform = cy::Matrix4f::RotationX(-PI_OVER_2);
@@ -174,9 +188,9 @@ void init_camera()
 {
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
-	scene.camera.set_perspective_projection(DEG2RAD(90), aspect_ratio, 0.0f, 30.0f);
+	scene.camera.set_perspective_projection(90, aspect_ratio, 0.0f, 10.0f);
 
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 1200.0f);
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 40.0f);
 	cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
 
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
@@ -198,8 +212,14 @@ int main(int argc, char** argv)
 		std::cerr << "Error loading file: " << filename << std::endl;
 		return 1;
 	}
-	mesh.create_vbo_data_and_elements();
-
+	if (use_elements)
+	{
+		mesh.create_vbo_data_and_elements();
+	}
+	else
+	{
+		mesh.create_vbo_data_for_draw_arrays();
+	}
 	init_glut_and_glew(argc, argv);
 	init_points_from_mesh(mesh);
 	init_camera();

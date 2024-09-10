@@ -79,6 +79,33 @@ public:
 	cy::Vec3f const& VN_vbo(int i) const { return vn_vbo[i]; }	//!< returns the i^th vertex normal
 	cy::Vec3f const& VT_vbo(int i) const { return vt_vbo[i]; }	//!< returns the i^th vertex texture
 
+	// Creates a vbo for vertices, normals, and texture coordinates by just copying all of the data into the vbo
+	// and duplicating the data if there are duplicate vertices
+	void create_vbo_data_for_draw_arrays()
+	{
+		int n_faces = NF();
+		std::vector<cy::Vec3f> _v_vbo;
+		std::vector<cy::Vec3f> _vn_vbo;
+		std::vector<cy::Vec3f> _vt_vbo;
+
+		for (int i = 0; i < n_faces; i++)
+		{
+			// build the face
+			unsigned int v[3] = { F(i).v[0], F(i).v[1], F(i).v[2] };
+			unsigned int vn[3] = { FN(i).v[0], FN(i).v[1], FN(i).v[2] };
+			unsigned int vt[3] = { FT(i).v[0], FT(i).v[1], FT(i).v[2] };
+			for (int j = 0; j < 3; j++) {
+				_v_vbo.push_back(V(v[j]));
+				_vn_vbo.push_back(VN(vn[j]));
+				_vt_vbo.push_back(VT(vt[j]));
+			}
+		}
+		// allocate space for the data
+		SetVBOSize((unsigned int)_v_vbo.size());
+		memcpy(v_vbo, _v_vbo.data(), sizeof(cy::Vec3f) * _v_vbo.size());
+		memcpy(vn_vbo, _vn_vbo.data(), sizeof(cy::Vec3f) * _vn_vbo.size());
+		memcpy(vt_vbo, _vt_vbo.data(), sizeof(cy::Vec3f) * _vt_vbo.size());
+	}
 
 	void create_vbo_data_and_elements()
 	{
