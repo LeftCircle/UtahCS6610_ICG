@@ -77,8 +77,7 @@ void render(void)
 	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
-	scene.set_mvp();
-	scene.program["mvp"] = scene.MVP();
+	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
 
@@ -138,13 +137,13 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.V_vbo(0), GL_STATIC_DRAW);
 
-	/*glGenBuffers(1, &vn_vbo);
+	glGenBuffers(1, &vn_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VN_vbo(0), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &vt_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);*/
+	//glGenBuffers(1, &vt_vbo);
+	//glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &ebuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
@@ -155,11 +154,10 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.program.Bind();	
 
 	scene.program.SetAttribBuffer("position", v_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-	
 	
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
@@ -184,8 +182,7 @@ void init_camera()
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
 	scene.camera.lookat(camera_pos, target, up);
 
-	scene.set_mvp();
-	scene.program["mvp"] = scene.MVP();
+	scene.set_mvp_and_update_uniforms();
 }
 
 int main(int argc, char** argv)

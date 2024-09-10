@@ -44,6 +44,14 @@ public:
 		mv_normals.Transpose();
 	}
 
+	void set_mvp_and_update_uniforms()
+	{
+		set_mvp();
+		program.SetUniform("mvp", mvp);
+		program.SetUniform("mv_points", mv_points);
+		program.SetUniform("mv_normals", mv_normals);
+	}
+
 };
 }; // namespace rc
 #endif // !RC_OPENGL_SCENE_HPP
