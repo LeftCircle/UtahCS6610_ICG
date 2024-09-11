@@ -205,13 +205,16 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 
 	// Add some lights!
 	rc::DirectionalLight light;
-	light.set_direction(cy::Vec3f(1.0f, 0.0f, 1.0f));
+	light.set_direction(cy::Vec3f(-1.0f, -1.0f, -1.0f));
 	scene.program.SetUniform("light_direction", light.direction());
-	scene.program.SetUniform("k_diffuse", cy::Vec3f(0.5f, 0.5f, 0.5f));
+	//scene.program.SetUniform("k_diffuse", cy::Vec3f(0.5f, 0.5f, 0.5f));
+	scene.program.SetUniform("k_diffuse", cy::Vec3f(1.0f, 0.0f, 0.0f));
 	scene.program.SetUniform("k_ambient", cy::Vec3f(1.0f, 0.0f, 0.0f));
-	scene.program.SetUniform("k_specular", cy::Vec3f(1.0f, 1.0f, 1.0f));
-	scene.program.SetUniform("light_intensity", 1.0f);
-	scene.program.SetUniform("shininess", 1.0f);
+	//scene.program.SetUniform("k_specular", cy::Vec3f(1.0f, 1.0f, 1.0f));
+	scene.program.SetUniform("k_specular", cy::Vec3f(0.0f, 0.0f, 0.0f));
+	scene.program.SetUniform("light_intensity", 0.5f);
+	scene.program.SetUniform("ambient_intensity", 0.0f);
+	scene.program.SetUniform("shininess", 1000.0f);
 }
 
 void init_camera()
