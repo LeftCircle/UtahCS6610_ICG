@@ -87,7 +87,6 @@ void _draw_arrays_or_elements()
 
 void render(void)
 {
-	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	_draw_arrays_or_elements();
 	scene.set_mvp_and_update_uniforms();
@@ -118,17 +117,28 @@ void init_glut_and_glew(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glEnable(GL_DEPTH_TEST);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("Utah Teapot");
 	glewInit();
 	CY_GL_REGISTER_DEBUG_CALLBACK;
-	glutKeyboardFunc(keyboard);
+	
+
+	// For some reason these don't work if placed earlier in the function
+	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void bind_glut_functions()
+{
+	// Display
 	glutDisplayFunc(render);
 	glutIdleFunc(idle);
+	// Keyboard
+	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(fn_keyboard);
+	// Mouse
 	glutMouseFunc(mouse_buttons);
 	glutMotionFunc(mouse_motion);
-	glutSpecialFunc(fn_keyboard);
 }
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
@@ -188,9 +198,9 @@ void init_camera()
 {
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
-	scene.camera.set_perspective_projection(90, aspect_ratio, 0.0f, 10.0f);
+	scene.camera.set_perspective_projection(90, aspect_ratio, 1.0f, 5.0f);
 
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 40.0f);
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, -10.0f, 10.0f);
 	cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
 
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
@@ -223,6 +233,8 @@ int main(int argc, char** argv)
 	init_glut_and_glew(argc, argv);
 	init_points_from_mesh(mesh);
 	init_camera();
+	bind_glut_functions();
+
 	glutMainLoop();
 	return 0;
 }

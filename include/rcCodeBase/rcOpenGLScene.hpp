@@ -23,7 +23,7 @@ public:
 	cy::Matrix3f const & MV_normals() const { return mv_normals; }
 	cy::Matrix3f& MV_normals() { return mv_normals; }
 
-	GLfloat bg[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	GLfloat bg[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	const char* window_name = "Window Name";
 	cy::GLSLProgram program;
 	float FOV = 90.0f;
