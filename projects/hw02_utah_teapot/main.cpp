@@ -16,7 +16,7 @@ using namespace rc;
 
 const char* filename;
 GLScene scene;
-bool use_elements = false;
+bool use_elements = true;
 
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
@@ -113,7 +113,19 @@ bool _are_command_arguments_valid_or_debug(int argc, char** argv)
 	return true;
 }
 
-void init_glut_and_glew(int argc, char** argv)
+void _init_glut_settings()
+{
+	// check to see if the window has been created with glutCreateWindow
+	if (glutGetWindow() == 0)
+	{
+		std::cerr << "Window not created with glutCreateWindow" << std::endl;
+		return;
+	}
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
+}
+
+void init_window(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -121,12 +133,10 @@ void init_glut_and_glew(int argc, char** argv)
 	glutCreateWindow("Utah Teapot");
 	glewInit();
 	CY_GL_REGISTER_DEBUG_CALLBACK;
-	
-
-	// For some reason these don't work if placed earlier in the function
-	glClearColor(scene.bg[0], scene.bg[1], scene.bg[2], scene.bg[3]);
-	glEnable(GL_DEPTH_TEST);
+	// These must occur after the window is created
+	_init_glut_settings();
 }
+
 
 void bind_glut_functions()
 {
@@ -198,9 +208,9 @@ void init_camera()
 {
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
-	scene.camera.set_perspective_projection(90, aspect_ratio, 1.0f, 5.0f);
+	scene.camera.set_perspective_projection(90, aspect_ratio, 1.0f, 50.0f);
 
-	cy::Vec3f camera_pos = cy::Vec3f(0.0f, -10.0f, 10.0f);
+	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 30.0f);
 	cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
 
 	cy::Vec3f target = cy::Vec3f(0.0f, 0.0f, 0.0f);
@@ -230,7 +240,7 @@ int main(int argc, char** argv)
 	{
 		mesh.create_vbo_data_for_draw_arrays();
 	}
-	init_glut_and_glew(argc, argv);
+	init_window(argc, argv);
 	init_points_from_mesh(mesh);
 	init_camera();
 	bind_glut_functions();
