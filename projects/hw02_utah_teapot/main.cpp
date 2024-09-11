@@ -9,6 +9,7 @@
 #include "rcCodeBase/rcOpenGLScene.hpp"
 #include "rcCodeBase/rcCore.hpp"
 #include "rcCodeBase/rcObjModifier.h"
+#include "rcCodeBase/rcLights.hpp"
 #include <iostream>
 
 
@@ -137,7 +138,6 @@ void init_window(int argc, char** argv)
 	_init_glut_settings();
 }
 
-
 void bind_glut_functions()
 {
 	// Display
@@ -202,6 +202,16 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	cy::Vec3f bounding_box_center = (mesh.GetBoundMin() + mesh.GetBoundMax()) / 2.0f;
 	bounding_box_center = cy::Vec3f(cy::Matrix4f::RotationX(-PI_OVER_2) * bounding_box_center);
 	scene.point_transform.AddTranslation(-bounding_box_center);
+
+	// Add some lights!
+	rc::DirectionalLight light;
+	light.set_direction(cy::Vec3f(1.0f, 0.0f, 1.0f));
+	scene.program.SetUniform("light_direction", light.direction());
+	scene.program.SetUniform("k_diffuse", cy::Vec3f(0.5f, 0.5f, 0.5f));
+	scene.program.SetUniform("k_ambient", cy::Vec3f(1.0f, 0.0f, 0.0f));
+	scene.program.SetUniform("k_specular", cy::Vec3f(1.0f, 1.0f, 1.0f));
+	scene.program.SetUniform("light_intensity", 1.0f);
+	scene.program.SetUniform("shininess", 1.0f);
 }
 
 void init_camera()

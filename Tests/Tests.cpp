@@ -3,6 +3,7 @@
 // rc codebase includes
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcOpenGLScene.hpp"
+#include "rcCodeBase/rcLights.hpp"
 
 // cy codebase includes
 #include "cyCodeBase/cyVector.h"
@@ -111,7 +112,7 @@ public:
 		cy::Vec3f expected_vbo0 = expected_vbo_vertices[0];
 		wchar_t error_msg[100];
 		for (int i = 0; i < expected_vbo_size; i++)
-		{	
+		{
 			// Vertex Coordinates
 			cy::Vec3f a_v = test_tri_mesh.V_vbo(i);
 			cy::Vec3f e_v = expected_vbo_vertices[i];
@@ -123,7 +124,7 @@ public:
 			cy::Vec3f e_n = expected_vbo_normals[i];
 			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Normal mismatch at index %d", i);
 			Assert::AreEqual(e_n, a_n, error_msg);
-			
+
 			// Texture Coordinates
 			cy::Vec3f a_t = test_tri_mesh.VT_vbo(i);
 			cy::Vec3f e_t = expected_vbo_texcoords[i];
@@ -141,7 +142,7 @@ public:
 TEST_CLASS(TESTrcOpenGLScene)
 {
 public:
-	TEST_METHOD(TESTNormalMatrixIsInverseScaleOfPointMV) 
+	TEST_METHOD(TESTNormalMatrixIsInverseScaleOfPointMV)
 	{
 		// Check that there is a model-view, model-view-projection, and model-view-normal matrix
 		rc::GLScene test_scene;
@@ -154,7 +155,7 @@ public:
 		test_scene.camera.lookat(camera_pos, target, up);
 		test_scene.point_transform.SetScale(cy::Vec3f(1.0f, 2.0f, 3.0f));
 		test_scene.point_transform.SetRotationX(-PI_OVER_2);
-		
+
 		test_scene.set_mvp();
 		cy::Matrix4f& mvp = test_scene.MVP();
 		cy::Matrix4f& mv_points = test_scene.MV_points();
@@ -173,6 +174,20 @@ public:
 	}
 
 	// Test the normal matrix is the inverse of the point matrix
-	 
+
+};
+
+TEST_CLASS(TestLightingClasses)
+{
+public:
+	TEST_METHOD(TESTDirectionalLighting)
+	{
+		// Test that the directional light has a position, intensity, and direction.
+		rc::DirectionalLight light;
+		Assert::AreEqual(cy::Vec3f(0.0f, 0.0f, 0.0f), light.position(), L"Directional light position should be (0, 0, 0)");
+		Assert::AreEqual(1.0f, light.intensity(), L"Directional light intensity should be 1.0");
+		Assert::AreEqual(cy::Vec3f(0.0f, -1.0f, 0.0f), light.direction(), L"Directional light direction should be (0, -1, 0)");
+	};
 };
 } // namespace Tests
+

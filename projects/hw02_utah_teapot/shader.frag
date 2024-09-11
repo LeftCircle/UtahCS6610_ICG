@@ -2,9 +2,9 @@
 
 layout(location = 0) out vec4 fragColor;
 
-in vec3 vNormal;
+in vec3 vColor;
 
 void main()
 {
-	fragColor = vec4(normalize(vNormal), 1.0);
+	fragColor = vec4(normalize(vColor), 1.0);
 }
