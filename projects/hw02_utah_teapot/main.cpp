@@ -212,7 +212,7 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.program.SetUniform("k_ambient", cy::Vec3f(1.0f, 0.0f, 0.0f));
 	//scene.program.SetUniform("k_specular", cy::Vec3f(1.0f, 1.0f, 1.0f));
 	scene.program.SetUniform("k_specular", cy::Vec3f(0.0f, 0.0f, 0.0f));
-	scene.program.SetUniform("light_intensity", 0.5f);
+	scene.program.SetUniform("light_intensity", 0.75f);
 	scene.program.SetUniform("ambient_intensity", 0.0f);
 	scene.program.SetUniform("shininess", 1000.0f);
 }
