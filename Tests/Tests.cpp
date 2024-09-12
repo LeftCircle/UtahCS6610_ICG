@@ -13,6 +13,7 @@
 #include <cwchar>
 
 const char* test_file_path = "E:\\Programming\\OpenGL\\Projects\\ICG_Utah\\Tests\\test_objs\\simple_obj.obj";
+const char* teapot_file_path = "C:\\Programming\\OpenGL\\UtahCS6610_ICG\\projects\\hw02_utah_teapot\\teapot.obj";
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -56,6 +57,12 @@ public:
 	{
 		rc::rcTriMeshForGL test_class;
 		Assert::IsTrue(test_class.LoadFromFileObj(test_file_path));
+	}
+
+	TEST_METHOD(TESTOpenTeapot)
+	{
+		rc::rcTriMeshForGL test_class;
+		Assert::IsTrue(test_class.LoadFromFileObj(teapot_file_path));
 	}
 	TEST_METHOD(TESTcreate_vbos_and_element_buffer)
 	{

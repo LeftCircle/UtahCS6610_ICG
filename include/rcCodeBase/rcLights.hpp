@@ -8,6 +8,7 @@
 
 namespace rc
 {
+
 	class Light
 	{
 	protected:
@@ -37,6 +38,9 @@ namespace rc
 	{
 	protected:
 		cy::Vec3f _direction = cy::Vec3f(0, -1, 0);
+		cy::Vec3f _ambient_intensity= cy::Vec3f(0.1f, 0.1f, 0.1f);
+		cy::Vec3f _diffuse_intensity= cy::Vec3f(0.5f, 0.5f, 0.5f);
+		cy::Vec3f _specular_intensity= cy::Vec3f(0.5f, 0.5f, 0.5f);
 
 	public:
 		DirectionalLight() {};
@@ -49,7 +53,17 @@ namespace rc
 		void set_direction(cy::Vec3f direction) { _direction = direction; }
 		cy::Vec3f const& direction() const { return _direction; }
 		cy::Vec3f& direction() { return _direction; }
-
+		
+		// Intensities
+		void set_ambient_intensity(cy::Vec3f const& intensity) { _ambient_intensity = intensity; }
+		void set_diffuse_intensity(cy::Vec3f const& intensity) { _diffuse_intensity = intensity; }
+		void set_specular_intensity(cy::Vec3f const& intensity) { _specular_intensity = intensity; }
+		cy::Vec3f const& ambient_intensity() const { return _ambient_intensity; }
+		cy::Vec3f const& diffuse_intensity() const { return _diffuse_intensity; }
+		cy::Vec3f const& specular_intensity() const { return _specular_intensity; }
+		cy::Vec3f& ambient_intensity() { return _ambient_intensity; }
+		cy::Vec3f& diffuse_intensity() { return _diffuse_intensity; }
+		cy::Vec3f& specular_intensity() { return _specular_intensity; }
 	};
 }; // namespace rc
 

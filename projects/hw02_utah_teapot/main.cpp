@@ -16,8 +16,19 @@
 using namespace rc;
 
 const char* filename;
+
 GLScene scene;
+rc::DirectionalLight light;
 bool use_elements = true;
+
+// Create a bitflag for different lighting types
+enum ShadingType
+{
+	AMBIENT = 1 << 0,
+	DIFFUSE = 1 << 1,
+	SPECULAR = 1 << 2
+};
+unsigned int shading_flag = ShadingType::AMBIENT | ShadingType::DIFFUSE | ShadingType::SPECULAR;
 
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
@@ -61,6 +72,53 @@ void keyboard(unsigned char key, int x, int y)
 	if (key == 27)
 	{
 		glutLeaveMainLoop();
+	}
+	// if A key is pressed, either disable or enable ambient lighting
+	if (key == 'a')
+	{
+		if (shading_flag & ShadingType::AMBIENT)
+		{
+			shading_flag &= ~ShadingType::AMBIENT;
+			scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(0.0f, 0.0f, 0.0f));
+		}
+		else
+		{
+			shading_flag |= ShadingType::AMBIENT;
+			rcTriMeshForGL* mesh = scene.get_mesh();
+			scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh->get_k_vec3f());
+		}
+	}
+	if (key == 's')
+	{
+		if (shading_flag & ShadingType::SPECULAR)
+		{
+			shading_flag &= ~ShadingType::SPECULAR;
+			scene.program.SetUniform("intensity_k_specular", cy::Vec3f(0.0f, 0.0f, 0.0f));
+		}
+		else
+		{
+			shading_flag |= ShadingType::SPECULAR;
+			rcTriMeshForGL* mesh = scene.get_mesh();
+			scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh->get_k_vec3f());
+		}
+	}
+	if (key == 'd')
+	{
+		if (shading_flag & ShadingType::DIFFUSE)
+		{
+			shading_flag &= ~ShadingType::DIFFUSE;
+			scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(0.0f, 0.0f, 0.0f));
+		}
+		else
+		{
+			shading_flag |= ShadingType::DIFFUSE;
+			rcTriMeshForGL* mesh = scene.get_mesh();
+			scene.program.SetUniform("intensity_k_diffuse", light.specular_intensity() * mesh->get_k_vec3f());
+		}
+	}
+	if (key == 'a' || key == 's' || key == 'd')
+	{
+		glutPostRedisplay();
 	}
 }
 
@@ -153,6 +211,7 @@ void bind_glut_functions()
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 {
+	scene.set_mesh(&mesh);
 	//scene.n_points = mesh.NV();
 	scene.n_points = mesh.NF() * 3;
 	scene.n_elements = mesh.NE();
@@ -204,17 +263,16 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.point_transform.AddTranslation(-bounding_box_center);
 
 	// Add some lights!
-	rc::DirectionalLight light;
+	mesh.set_k(1.0f, 0.0, 0.0);
 	light.set_direction(cy::Vec3f(-1.0f, -1.0f, -1.0f));
+	light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
+	light.set_specular_intensity(cy::Vec3f(0.5f, 0.5f, 0.5f));
+	light.set_diffuse_intensity(cy::Vec3f(0.85f));
 	scene.program.SetUniform("light_direction", light.direction());
-	//scene.program.SetUniform("k_diffuse", cy::Vec3f(0.5f, 0.5f, 0.5f));
-	scene.program.SetUniform("k_diffuse", cy::Vec3f(1.0f, 0.0f, 0.0f));
-	scene.program.SetUniform("k_ambient", cy::Vec3f(1.0f, 0.0f, 0.0f));
-	scene.program.SetUniform("k_specular", cy::Vec3f(1.0f, 1.0f, 1.0f));
-	//scene.program.SetUniform("k_specular", cy::Vec3f(0.0f, 0.0f, 0.0f));
-	scene.program.SetUniform("light_intensity", 0.75f);
-	scene.program.SetUniform("ambient_intensity", 0.2f);
-	scene.program.SetUniform("shininess", 1000.0f);
+	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
+	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
+	scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
+	scene.program.SetUniform("shininess", 200.0f);
 }
 
 void init_camera()

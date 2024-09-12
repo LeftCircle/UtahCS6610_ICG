@@ -5,6 +5,7 @@
 #include <GL/freeglut.h>
 #include "cyCodeBase/cyIVector.h"
 #include "rcCodeBase/rcCamera.hpp"
+#include "rcCodeBase/rcObjModifier.h"
 #include "cyCodeBase/cyGL.h"
 
 namespace rc
@@ -15,7 +16,10 @@ protected:
 	cy::Matrix4f mvp = cy::Matrix4f::Identity();
 	cy::Matrix4f mv_points = cy::Matrix4f::Identity();
 	cy::Matrix3f mv_normals = cy::Matrix3f::Identity();
+	rcTriMeshForGL* _mesh;
 public:
+	GLScene() : _mesh(nullptr) {}
+
 	cy::Matrix4f const & MVP() const { return mvp; }
 	cy::Matrix4f& MVP() { return mvp; }
 	cy::Matrix4f const & MV_points() const { return mv_points; }
@@ -34,6 +38,9 @@ public:
 
 	unsigned int n_elements = 0;
 	unsigned int n_points = 0;
+
+	void set_mesh(rcTriMeshForGL* mesh) { _mesh = mesh; }
+	rcTriMeshForGL* get_mesh() { return _mesh; }
 
 	void set_mvp()
 	{

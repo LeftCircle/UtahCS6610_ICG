@@ -8,18 +8,10 @@
 
 namespace rc{
 
-enum ShadingType
-{
-	AMBIENT = 1 << 0,
-	DIFFUSE = 1 << 1,
-	SPECULAR = 1 << 2,
-};
-
 class Camera
 {
 private:
 	cy::Vec3f _og_up = cy::Vec3f(0, 1, 0);
-	unsigned int _shading_flag = AMBIENT;
 public:
 	cy::Vec3f position = cy::Vec3f(0, 0, 60);
 	cy::Vec3f target = cy::Vec3f(0, 0, 0);
@@ -30,9 +22,6 @@ public:
 	cy::Vec3f get_up_vector() { return cy::Vec3f(view_matrix.cell[1], view_matrix.cell[5], view_matrix.cell[9]); };
 	cy::Vec3f get_tangent_vector() { return cy::Vec3f(view_matrix.cell[0], view_matrix.cell[4], view_matrix.cell[8]); };
 
-	void set_shading(unsigned int flag) { _shading_flag = flag; }
-	void remove_shading(unsigned int flag) { _shading_flag &= ~flag; }
-	void add_shading(unsigned int flag) { _shading_flag |= flag; }
 	void set_perspective_projection(float new_fov, float aspect, float znear, float zfar)
 	{
 		fov = new_fov;

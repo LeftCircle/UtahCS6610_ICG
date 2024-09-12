@@ -63,6 +63,7 @@ protected:
 	int* elements; // elements arranged for a VBO to work with an element array buffer
 	unsigned int n_elements;
 	unsigned int vbo_size;
+	float constant_k[3] = { 1.0f, 1.0f, 1.0f }; // constant k values for the phong shading model
 
 public:
 	rcTriMeshForGL() { cyTriMesh(); };
@@ -78,6 +79,12 @@ public:
 	cy::Vec3f const& V_vbo(int i) const { return v_vbo[i]; }		//!< returns the i^th vertex
 	cy::Vec3f const& VN_vbo(int i) const { return vn_vbo[i]; }	//!< returns the i^th vertex normal
 	cy::Vec3f const& VT_vbo(int i) const { return vt_vbo[i]; }	//!< returns the i^th vertex texture
+
+	// getters and setters for k
+	float k(int i) { return constant_k[i]; }
+	void set_k(cy::Vec3f const& k) { constant_k[0] = k.x; constant_k[1] = k.y; constant_k[2] = k.z; }
+	void set_k(const float r, const float g, const float b) { constant_k[0] = r; constant_k[1] = g; constant_k[2] = b; }
+	cy::Vec3f get_k_vec3f() { return cy::Vec3f(constant_k[0], constant_k[1], constant_k[2]); }
 
 	// Creates a vbo for vertices, normals, and texture coordinates by just copying all of the data into the vbo
 	// and duplicating the data if there are duplicate vertices
