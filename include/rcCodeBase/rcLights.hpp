@@ -64,6 +64,13 @@ namespace rc
 		cy::Vec3f& ambient_intensity() { return _ambient_intensity; }
 		cy::Vec3f& diffuse_intensity() { return _diffuse_intensity; }
 		cy::Vec3f& specular_intensity() { return _specular_intensity; }
+		
+		void rotate_direction(float theta, float phi)
+		{
+			cy::Matrix4f rot_p_general = cy::Matrix4f::Rotation(cy::Vec3f(1, 0, 0), DEG2RAD(phi));
+			cy::Matrix4f rot_t_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 1, 0), DEG2RAD(theta));
+			_direction = cy::Vec3f(rot_t_general * rot_p_general * _direction);
+		}
 	};
 }; // namespace rc
 

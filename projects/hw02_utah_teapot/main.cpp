@@ -20,6 +20,7 @@ const char* filename;
 GLScene scene;
 rc::DirectionalLight light;
 bool use_elements = true;
+bool ctrl_held = false;
 
 // Create a bitflag for different lighting types
 enum ShadingType
@@ -36,19 +37,40 @@ unsigned int shading_flag = ShadingType::AMBIENT | ShadingType::DIFFUSE | Shadin
 void mouse_motion(int x, int y)
 {
 	int button = glutGetModifiers();
-	if (button == GLUT_LEFT_BUTTON)
+	// set the rotation of the object only if the left button is down and ctrl is not pressed
+	bool can_rotate_obj = (button == GLUT_LEFT_BUTTON) && !ctrl_held; 
+	bool can_rotate_light = (button == GLUT_LEFT_BUTTON) && ctrl_held;
+	if (ctrl_held) 
+	{ 
+		std::cout << "button == left = " << (button == GLUT_LEFT_BUTTON) << std::endl;
+	};
+	if (can_rotate_obj)
 	{
 		int dx = x - scene.mouse_position.x;
 		int dy = y - scene.mouse_position.y;
 	
 		scene.camera.rotate_about_og_up(-dx, -dy);
-		scene.mouse_position.Set(x, y);
 	}
+	if (can_rotate_light)
+	{
+		int dx = x - scene.mouse_position.x;
+		int dy = y - scene.mouse_position.y;
+
+		light.rotate_direction(dx, dy);
+		scene.program.SetUniform("light_direction", light.direction());
+	}
+	scene.mouse_position.Set(x, y);
 	glutPostRedisplay();
 }
 
 void mouse_buttons(int button, int state, int x, int y)
 {
+	int modifiers = glutGetModifiers();
+	bool old_held = ctrl_held;
+	ctrl_held = modifiers == GLUT_ACTIVE_CTRL;
+	if (old_held != ctrl_held) {
+		std::cout << "ctrl_held = " << ctrl_held << std::endl;
+	}
 	// store the mouse position when the left button is pressed
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
