@@ -67,10 +67,63 @@ namespace rc
 		
 		void rotate_direction(float theta, float phi)
 		{
-			cy::Matrix4f rot_p_general = cy::Matrix4f::Rotation(cy::Vec3f(1, 0, 0), DEG2RAD(phi));
-			cy::Matrix4f rot_t_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 1, 0), DEG2RAD(theta));
+			cy::Matrix4f rot_p_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 0, 1), DEG2RAD(theta));
+			//cy::Matrix4f rot_t_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 1, 0), DEG2RAD(phi));
+			cy::Matrix4f rot_t_general = cy::Matrix4f::Identity();
 			_direction = cy::Vec3f(rot_t_general * rot_p_general * _direction);
 		}
+	};
+
+	class SphericalDirectionalLight : public DirectionalLight
+	{
+		// Like a directional light but the direction is determined by the vector from the spherical 
+		// position to the origin
+	private:
+		cy::Vec3f _origin = cy::Vec3f(0.0f);
+		float _theta = 0.0f;
+		float _phi = 0.0f;
+		float _d_theta = 0.0f;
+		float _d_phi = 0.0f;
+		float _theta_naught = 0.0f;
+		float _phi_naught = 0.0f;
+		bool rotating = false;
+
+	public:
+		SphericalDirectionalLight() {};
+		SphericalDirectionalLight(float t, float p) {_theta = t, _phi = p; }
+
+		cy::Vec3f spherical_to_cartesian(float t, float p)
+		{
+			t = DEG2RAD(t);
+			p = DEG2RAD(p);
+			return cy::Vec3f(sin(p) * cos(t), sin(t) * sin(p), cos(p));
+		}
+
+		void calculate_direction(float theta, float phi)
+		{
+			// direction is normalized vector from the spherical position to the origin. 
+			cy::Vec3f spherical_pos = spherical_to_cartesian(theta, phi) + _origin;
+			_direction = (spherical_pos - _origin).GetNormalized();
+		}
+
+		void start_rotating()
+		{
+			_d_theta = 0;
+			_d_phi = 0;
+			_theta_naught = _theta; _phi_naught = _phi;
+			rotating = true;
+		}
+
+		void stop_rotating() {rotating = false; }
+
+		cy::Vec3f add_rotation_and_get_direction(float dt, float dp)
+		{
+			_d_theta += dt;
+			_d_phi += dp;
+			calculate_direction(_theta_naught + _d_theta, _phi_naught + _d_phi);
+			return _direction;
+		}
+
 	};
 }; // namespace rc
 

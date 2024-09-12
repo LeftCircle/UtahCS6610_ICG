@@ -18,7 +18,7 @@ using namespace rc;
 const char* filename;
 
 GLScene scene;
-rc::DirectionalLight light;
+rc::SphericalDirectionalLight light;
 bool use_elements = true;
 bool ctrl_held = false;
 
@@ -40,10 +40,7 @@ void mouse_motion(int x, int y)
 	// set the rotation of the object only if the left button is down and ctrl is not pressed
 	bool can_rotate_obj = (button == GLUT_LEFT_BUTTON) && !ctrl_held; 
 	bool can_rotate_light = (button == GLUT_LEFT_BUTTON) && ctrl_held;
-	if (ctrl_held) 
-	{ 
-		std::cout << "button == left = " << (button == GLUT_LEFT_BUTTON) << std::endl;
-	};
+	
 	if (can_rotate_obj)
 	{
 		int dx = x - scene.mouse_position.x;
@@ -56,7 +53,9 @@ void mouse_motion(int x, int y)
 		int dx = x - scene.mouse_position.x;
 		int dy = y - scene.mouse_position.y;
 
-		light.rotate_direction(dx, dy);
+		//scene.camera.rotate_other_position_about_og_up(light.direction(), -dx, -dy);
+		light.add_rotation_and_get_direction(-dx, -dy);
+		//light.rotate_direction(-dx, -dy);
 		scene.program.SetUniform("light_direction", light.direction());
 	}
 	scene.mouse_position.Set(x, y);
@@ -66,11 +65,14 @@ void mouse_motion(int x, int y)
 void mouse_buttons(int button, int state, int x, int y)
 {
 	int modifiers = glutGetModifiers();
-	bool old_held = ctrl_held;
+	bool was_ctrl_held = ctrl_held;
 	ctrl_held = modifiers == GLUT_ACTIVE_CTRL;
-	if (old_held != ctrl_held) {
-		std::cout << "ctrl_held = " << ctrl_held << std::endl;
+	if (was_ctrl_held != ctrl_held)
+	{
+		if (ctrl_held) { light.start_rotating(); }
+		else { light.stop_rotating();  }
 	}
+	
 	// store the mouse position when the left button is pressed
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
@@ -290,6 +292,7 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
 	light.set_specular_intensity(cy::Vec3f(0.5f, 0.5f, 0.5f));
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
+	scene.position_in_mv(light.direction());
 	scene.program.SetUniform("light_direction", light.direction());
 	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
 	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
