@@ -1,5 +1,6 @@
 #ifndef RC_CAMERA_HPP
 #define RC_CAMERA_HPP
+
 #include "cyCodeBase/cyMatrix.h"
 #include "rcCodeBase/rcCore.hpp"
 #include <iostream>
