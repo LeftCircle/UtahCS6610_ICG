@@ -1,0 +1,28 @@
+# seven differnt vertices that will create three triangles
+# Where the first and third share one side and the second
+# triangle is off on its own
+
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+v 10.0 0.0 0.0 
+v 12.0 0.0 0.0
+v 10.0 1.0 0.0
+v 0.0 -1.0 0.0
+
+# Burner vn's
+vn 0.0 0.0 0.0
+vn 0.1 0.1 0.1
+vn 0.2 0.2 0.2
+vn 0.3 0.3 0.3
+
+# burner vt
+vt 0.0 0.0 0.0
+vt 0.1 0.1 0.1
+vt 0.2 0.2 0.2
+vt 0.3 0.3 0.3
+
+# Faces! vertex_index/texture_index/normal_index
+f 1/1/1 2/2/2 3/3/3
+f 4/1/1 5/1/1 6/1/1
+f 1/4/4 2/2/2 7/3/3
