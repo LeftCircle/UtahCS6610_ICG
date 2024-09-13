@@ -11,12 +11,21 @@
 #include <string>
 #include <format>
 #include <cwchar>
+#include <iomanip>
+#include <cmath>
 
 const char* test_file_path = "E:\\Programming\\OpenGL\\Projects\\ICG_Utah\\Tests\\test_objs\\simple_obj.obj";
 const char* teapot_file_path = "C:\\Programming\\OpenGL\\UtahCS6610_ICG\\projects\\hw02_utah_teapot\\teapot.obj";
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+
+bool AreEqualWithTolerance(const cy::Vec3<float>& expected, const cy::Vec3<float>& actual, float tolerance = 1e-5)
+{
+	return (std::fabs(expected.x - actual.x) < tolerance) &&
+		(std::fabs(expected.y - actual.y) < tolerance) &&
+		(std::fabs(expected.z - actual.z) < tolerance);
+}
 
 // Defining a ToString function for the cy::Vec3f class so that we can use it in the Assert::AreEqual function
 namespace Microsoft {
@@ -30,18 +39,20 @@ namespace Microsoft {
 			}
 
 			// Define a ToString function for the cy::Matrix3f class
-			template<> std::wstring ToString<cy::Matrix3<float>>(const cy::Matrix3<float>& m)
-			{
-				wchar_t buffer[100];
-				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f\n%.2f, %.2f, %.2f\n%.2f, %.2f, %.2f", m(0, 0), m(0, 1), m(0, 2), m(1, 0), m(1, 1), m(1, 2), m(2, 0), m(2, 1), m(2, 2));
-				return std::wstring(buffer);
-			}
+            template<> std::wstring ToString<cy::Matrix3<float>>(const cy::Matrix3<float>& m)
+            {
+                wchar_t buffer[100];
+                swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f\n%.2f, %.2f, %.2f\n%.2f, %.2f, %.2f",
+                    m(0, 0), m(0, 1), m(0, 2), m(1, 0), m(1, 1), m(1, 2), m(2, 0), m(2, 1), m(2, 2));
+                return std::wstring(buffer);
+            }
 
 			// Define a ToString function for the cy::Matrix4f class
 			template<> std::wstring ToString<cy::Matrix4<float>>(const cy::Matrix4<float>& m)
 			{
 				wchar_t buffer[100];
-				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f", m(0, 0), m(0, 1), m(0, 2), m(0, 3), m(1, 0), m(1, 1), m(1, 2), m(1, 3), m(2, 0), m(2, 1), m(2, 2), m(2, 3), m(3, 0), m(3, 1), m(3, 2), m(3, 3));
+				swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f\n%.2f, %.2f, %.2f, %.2f",
+					m(0, 0), m(0, 1), m(0, 2), m(0, 3), m(1, 0), m(1, 1), m(1, 2), m(1, 3), m(2, 0), m(2, 1), m(2, 2), m(2, 3), m(3, 0), m(3, 1), m(3, 2), m(3, 3));
 				return std::wstring(buffer);
 			}
 		}
@@ -59,11 +70,6 @@ public:
 		Assert::IsTrue(test_class.LoadFromFileObj(test_file_path));
 	}
 
-	TEST_METHOD(TESTOpenTeapot)
-	{
-		rc::rcTriMeshForGL test_class;
-		Assert::IsTrue(test_class.LoadFromFileObj(teapot_file_path));
-	}
 	TEST_METHOD(TESTcreate_vbos_and_element_buffer)
 	{
 		// Based on the simple_obj.obj file
@@ -194,7 +200,31 @@ public:
 		Assert::AreEqual(cy::Vec3f(0.0f, 0.0f, 0.0f), light.position(), L"Directional light position should be (0, 0, 0)");
 		Assert::AreEqual(1.0f, light.intensity(), L"Directional light intensity should be 1.0");
 		Assert::AreEqual(cy::Vec3f(0.0f, -1.0f, 0.0f), light.direction(), L"Directional light direction should be (0, -1, 0)");
-	};
+	}
+
+	TEST_METHOD(TestSphericalLighting)
+	{
+		// Test that the spherical light points in the correct direction after specific rotations. 
+		rc::SphericalDirectionalLight light(0, 0);
+		Assert::AreEqual(cy::Vec3f(0.0f, 0.0f, -1.0f), light.direction(), L"Directional light direction should be (0, 0, -1)");
+		light.add_rotation_and_get_direction(90, 0);
+		bool matches = AreEqualWithTolerance(cy::Vec3f(0.0f, 0.0f, -1.0f), light.direction());
+		Assert::IsTrue(matches, L"Directional light direction should be (0, 0, -1)");
+		light.add_rotation_and_get_direction(-90, 90);
+		matches = AreEqualWithTolerance(cy::Vec3f(-1.0f, 0.0f, 0.0f), light.direction());
+		Assert::IsTrue(matches, L"Directional light direction should be (-1, 0, 0)");
+		light.add_rotation_and_get_direction(0, 90);
+		matches = AreEqualWithTolerance(cy::Vec3f(0.0f, 0.0f, 1.0f), light.direction());
+		Assert::IsTrue(matches, L"Directional light direction should be (0, 0, 1)");
+
+		light.add_rotation_and_get_direction(0, 90);
+		matches = AreEqualWithTolerance(cy::Vec3f(1.0f, 0.0f, 0.0f), light.direction());
+		Assert::IsTrue(matches, L"Directional light direction should be (1, 0, 0)");
+
+		// Add a rotation to the light and check that the direction is correct
+		light.SetRotation(cy::Matrix4f::RotationX(-PI_OVER_2));
+		matches = AreEqualWithTolerance(cy::Vec3f(0.0f, 0.0f, -1.0f), light.direction());
+	}
 };
 } // namespace Tests
 

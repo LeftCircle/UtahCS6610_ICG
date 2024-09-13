@@ -63,6 +63,18 @@ public:
 		up = cy::Vec3f(rot_t_general * rot_p_general * up);
 		view_matrix.SetView(position, target, up);
 	}
+
+	void rotate_other_position_about_og_up(cy::Vec3f& pos, float t, float p)
+	{
+		cy::Vec3f up = get_up_vector();
+		cy::Vec3f tangent = get_tangent_vector();
+
+		cy::Matrix4f rot_p_general = cy::Matrix4f::Rotation(tangent, DEG2RAD(p));
+		cy::Matrix4f rot_t_general = cy::Matrix4f::Rotation(_og_up, DEG2RAD(t));
+
+		pos = cy::Vec3f(rot_t_general * rot_p_general * position);
+	}
+	
 	void zoom(float z)
 	{
 		cy::Vec3f direction = position - target;

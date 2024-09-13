@@ -18,8 +18,9 @@ using namespace rc;
 const char* filename;
 
 GLScene scene;
-rc::DirectionalLight light;
+rc::SphericalDirectionalLight light;
 bool use_elements = true;
+bool ctrl_held = false;
 
 // Create a bitflag for different lighting types
 enum ShadingType
@@ -33,22 +34,47 @@ unsigned int shading_flag = ShadingType::AMBIENT | ShadingType::DIFFUSE | Shadin
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
 
+void rotate_light(int dx, int dy)
+{
+	light.add_rotation_and_get_direction(-dx, -dy);
+	scene.program.SetUniform("light_direction", light.direction());
+}
+
 void mouse_motion(int x, int y)
 {
 	int button = glutGetModifiers();
-	if (button == GLUT_LEFT_BUTTON)
+	// set the rotation of the object only if the left button is down and ctrl is not pressed
+	bool can_rotate_obj = (button == GLUT_LEFT_BUTTON) && !ctrl_held; 
+	bool can_rotate_light = (button == GLUT_LEFT_BUTTON) && ctrl_held;
+	
+	if (can_rotate_obj)
 	{
 		int dx = x - scene.mouse_position.x;
 		int dy = y - scene.mouse_position.y;
 	
 		scene.camera.rotate_about_og_up(-dx, -dy);
-		scene.mouse_position.Set(x, y);
 	}
+	if (can_rotate_light)
+	{
+		int dx = x - scene.mouse_position.x;
+		int dy = y - scene.mouse_position.y;
+		rotate_light(dx, dy);
+	}
+	scene.mouse_position.Set(x, y);
 	glutPostRedisplay();
 }
 
 void mouse_buttons(int button, int state, int x, int y)
 {
+	int modifiers = glutGetModifiers();
+	bool was_ctrl_held = ctrl_held;
+	ctrl_held = modifiers == GLUT_ACTIVE_CTRL;
+	if (was_ctrl_held != ctrl_held)
+	{
+		if (ctrl_held) { light.start_rotating(); }
+		else { light.stop_rotating();  }
+	}
+	
 	// store the mouse position when the left button is pressed
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
@@ -116,6 +142,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene.program.SetUniform("intensity_k_diffuse", light.specular_intensity() * mesh->get_k_vec3f());
 		}
 	}
+
 	if (key == 'a' || key == 's' || key == 'd')
 	{
 		glutPostRedisplay();
@@ -128,6 +155,22 @@ void fn_keyboard(int key, int x, int y)
 	{
 		std::cout << "Recompiling shaders" << std::endl;
 		scene.program.BuildFiles("shader.vert", "shader.frag");
+		glutPostRedisplay();
+	}
+	if (key == GLUT_KEY_RIGHT || key == GLUT_KEY_LEFT || key == GLUT_KEY_UP || key == GLUT_KEY_DOWN) {
+		float side_direction = 0.0f;
+		float up_direction =  0.0f;
+		if (key == GLUT_KEY_RIGHT || key == GLUT_KEY_LEFT)
+		{
+			side_direction = (key == GLUT_KEY_RIGHT) ? 1.0f : -1.0f;
+			rotate_light(5.0 * side_direction, 0.0f);
+		}
+		else if (key == GLUT_KEY_UP || key == GLUT_KEY_DOWN)
+		{
+			up_direction = (key == GLUT_KEY_UP) ? 1.0f : -1.0f;
+			rotate_light(0.0f, 5.0 * up_direction);
+		}
+		rotate_light(5.0 * side_direction, 5.0 * up_direction);
 		glutPostRedisplay();
 	}
 }
@@ -264,10 +307,12 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 
 	// Add some lights!
 	mesh.set_k(1.0f, 0.0, 0.0);
-	light.set_direction(cy::Vec3f(-1.0f, -1.0f, -1.0f));
+	light.set_spherical_position(0.0f, 90.0f);
+	light.SetRotation(cy::Matrix4f::RotationX(PI_OVER_2));
 	light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
 	light.set_specular_intensity(cy::Vec3f(0.5f, 0.5f, 0.5f));
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
+	
 	scene.program.SetUniform("light_direction", light.direction());
 	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
 	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());

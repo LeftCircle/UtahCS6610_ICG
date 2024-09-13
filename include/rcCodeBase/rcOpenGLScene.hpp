@@ -59,6 +59,11 @@ public:
 		program.SetUniform("mv_normals", mv_normals);
 	}
 
+	void position_in_mv(cy::Vec3f& position)
+	{
+		position = cy::Vec3f(mv_points * position);
+	}
+
 };
 }; // namespace rc
 #endif // !RC_OPENGL_SCENE_HPP
