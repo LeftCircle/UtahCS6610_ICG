@@ -2,7 +2,7 @@
 #define RC_LIGHTS_HPP
 
 #include "cyCodeBase/cyVector.h"
-#include "cyCodeBase/cyMatrix.h"
+#include "rcCodeBase/rcMatrix.h"
 #include "rcCodeBase/rcCore.hpp"
 
 
@@ -15,8 +15,10 @@ namespace rc
 		cy::Vec3f _position = cy::Vec3f(0, 0, 0);
 		cy::Vec3f _color = cy::Vec3f(1, 1, 1);
 		float _intensity = 1.0f;
+		cy::Matrix4f _rotation = cy::Matrix4f::Identity();
 
 	public:
+		virtual void SetRotat(cy::Matrix4f const& rotation) { _rotation = rotation; }
 		Light() {};
 		Light(cy::Vec3f position, cy::Vec3f color, float intensity)
 		{
@@ -65,13 +67,13 @@ namespace rc
 		cy::Vec3f& diffuse_intensity() { return _diffuse_intensity; }
 		cy::Vec3f& specular_intensity() { return _specular_intensity; }
 		
-		void rotate_direction(float theta, float phi)
-		{
-			cy::Matrix4f rot_p_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 0, 1), DEG2RAD(theta));
-			//cy::Matrix4f rot_t_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 1, 0), DEG2RAD(phi));
-			cy::Matrix4f rot_t_general = cy::Matrix4f::Identity();
-			_direction = cy::Vec3f(rot_t_general * rot_p_general * _direction);
-		}
+		//void rotate_direction(float theta, float phi)
+		//{
+		//	cy::Matrix4f rot_p_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 0, 1), DEG2RAD(theta));
+		//	//cy::Matrix4f rot_t_general = cy::Matrix4f::Rotation(cy::Vec3f(0, 1, 0), DEG2RAD(phi));
+		//	cy::Matrix4f rot_t_general = cy::Matrix4f::Identity();
+		//	_direction = cy::Vec3f(rot_t_general * rot_p_general * _direction);
+		//}
 	};
 
 	class SphericalDirectionalLight : public DirectionalLight
@@ -80,17 +82,32 @@ namespace rc
 		// position to the origin
 	private:
 		cy::Vec3f _origin = cy::Vec3f(0.0f);
-		float _theta = 0.0f;
-		float _phi = 0.0f;
-		float _d_theta = 0.0f;
-		float _d_phi = 0.0f;
-		float _theta_naught = 0.0f;
-		float _phi_naught = 0.0f;
+		float theta_mod = 0.0f;
 		bool rotating = false;
+		cy::Vec3f _spherical_naught = cy::Vec3f(0.0f, 0.0f, 1.0f);
+		cy::Vec3f _delta_spherical = cy::Vec3f(0.0f, 0.0f, 0.0f);
+		cy::Vec3f _spherical_pos = cy::Vec3f(0.0f, 0.0f, 1.0f);
+
+		void _spherical_to_cartesian(cy::Vec3f& spherical)
+		{
+			float t = DEG2RAD(spherical[0]);
+			float p = DEG2RAD(spherical[1]);
+			float r = spherical[2];
+			spherical.Set(r * sin(t) * cos(p), r * sin(t) * sin(p), r * cos(p));
+		}
 
 	public:
 		SphericalDirectionalLight() {};
-		SphericalDirectionalLight(float t, float p) {_theta = t, _phi = p; }
+		SphericalDirectionalLight(float t, float p) { _spherical_pos.Set(t, p, 1.0f); calculate_direction(t, p); }
+
+		void set_spherical_position(float t, float p) { _spherical_pos.Set(t, p, 1.0f); calculate_direction(t, p); }
+		virtual void SetRotation(cy::Matrix4f const& rotation) 
+		{
+			_rotation = rotation; 
+			_direction = cy::Vec3f(_rotation * _direction);
+
+		}
+
 
 		cy::Vec3f spherical_to_cartesian(float t, float p)
 		{
@@ -103,25 +120,30 @@ namespace rc
 		{
 			// direction is normalized vector from the spherical position to the origin. 
 			cy::Vec3f spherical_pos = spherical_to_cartesian(theta, phi) + _origin;
-			_direction = (spherical_pos - _origin).GetNormalized();
+			_direction = cy::Vec3f(_rotation * (_origin - spherical_pos).GetNormalized());
 		}
 
 		void start_rotating()
 		{
-			_d_theta = 0;
-			_d_phi = 0;
-			_theta_naught = _theta; _phi_naught = _phi;
+			_delta_spherical.Set(0.0f, 0.0f, 0.0f);
+			_spherical_naught.Set(_spherical_pos[0], _spherical_pos[1], _spherical_pos[2]);
 			rotating = true;
 		}
 
-		void stop_rotating() {rotating = false; }
+		void stop_rotating() 
+		{
+			rotating = false; 
+			cy::Vec3f new_sphere = _spherical_naught + _delta_spherical;
+			_spherical_pos.Set(new_sphere[0], new_sphere[1], new_sphere[2]);
+		}
 
 		cy::Vec3f add_rotation_and_get_direction(float dt, float dp)
 		{
-			_d_theta += dt;
-			_d_phi += dp;
-			calculate_direction(_theta_naught + _d_theta, _phi_naught + _d_phi);
-			return _direction;
+			_delta_spherical += cy::Vec3f(dt, dp, 0.0f);
+			cy::Vec3f new_sphere = _spherical_naught + _delta_spherical;
+			
+			calculate_direction(new_sphere[0], new_sphere[1]);
+			return cy::Vec3f(_direction);
 		}
 
 	};

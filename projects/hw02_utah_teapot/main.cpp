@@ -34,6 +34,12 @@ unsigned int shading_flag = ShadingType::AMBIENT | ShadingType::DIFFUSE | Shadin
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
 
+void rotate_light(int dx, int dy)
+{
+	light.add_rotation_and_get_direction(-dx, -dy);
+	scene.program.SetUniform("light_direction", light.direction());
+}
+
 void mouse_motion(int x, int y)
 {
 	int button = glutGetModifiers();
@@ -52,11 +58,7 @@ void mouse_motion(int x, int y)
 	{
 		int dx = x - scene.mouse_position.x;
 		int dy = y - scene.mouse_position.y;
-
-		//scene.camera.rotate_other_position_about_og_up(light.direction(), -dx, -dy);
-		light.add_rotation_and_get_direction(-dx, -dy);
-		//light.rotate_direction(-dx, -dy);
-		scene.program.SetUniform("light_direction", light.direction());
+		rotate_light(dx, dy);
 	}
 	scene.mouse_position.Set(x, y);
 	glutPostRedisplay();
@@ -140,6 +142,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene.program.SetUniform("intensity_k_diffuse", light.specular_intensity() * mesh->get_k_vec3f());
 		}
 	}
+
 	if (key == 'a' || key == 's' || key == 'd')
 	{
 		glutPostRedisplay();
@@ -152,6 +155,22 @@ void fn_keyboard(int key, int x, int y)
 	{
 		std::cout << "Recompiling shaders" << std::endl;
 		scene.program.BuildFiles("shader.vert", "shader.frag");
+		glutPostRedisplay();
+	}
+	if (key == GLUT_KEY_RIGHT || key == GLUT_KEY_LEFT || key == GLUT_KEY_UP || key == GLUT_KEY_DOWN) {
+		float side_direction = 0.0f;
+		float up_direction =  0.0f;
+		if (key == GLUT_KEY_RIGHT || key == GLUT_KEY_LEFT)
+		{
+			side_direction = (key == GLUT_KEY_RIGHT) ? 1.0f : -1.0f;
+			rotate_light(5.0 * side_direction, 0.0f);
+		}
+		else if (key == GLUT_KEY_UP || key == GLUT_KEY_DOWN)
+		{
+			up_direction = (key == GLUT_KEY_UP) ? 1.0f : -1.0f;
+			rotate_light(0.0f, 5.0 * up_direction);
+		}
+		rotate_light(5.0 * side_direction, 5.0 * up_direction);
 		glutPostRedisplay();
 	}
 }
@@ -288,11 +307,12 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 
 	// Add some lights!
 	mesh.set_k(1.0f, 0.0, 0.0);
-	light.set_direction(cy::Vec3f(-1.0f, -1.0f, -1.0f));
+	light.set_spherical_position(0.0f, 90.0f);
+	light.SetRotation(cy::Matrix4f::RotationX(PI_OVER_2));
 	light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
 	light.set_specular_intensity(cy::Vec3f(0.5f, 0.5f, 0.5f));
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
-	scene.position_in_mv(light.direction());
+	
 	scene.program.SetUniform("light_direction", light.direction());
 	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
 	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
