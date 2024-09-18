@@ -10,12 +10,17 @@
 #include "rcCodeBase/rcCore.hpp"
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcLights.hpp"
+#include "rcCodeBase/rcMaterial.h"
 #include <iostream>
 
 
 using namespace rc;
 
 const char* filename;
+const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
+//const char* brick_png_path = "assets\\texture_teapot\\brick.png";
+const char* brick_png_path = "other_brick.png";
+const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.png";
 
 GLScene scene;
 rc::SphericalDirectionalLight light;
@@ -252,22 +257,14 @@ void bind_glut_functions()
 	glutMotionFunc(mouse_motion);
 }
 
-void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
+void _bind_buffers(rc::rcTriMeshForGL& mesh)
 {
-	scene.set_mesh(&mesh);
-	//scene.n_points = mesh.NV();
-	scene.n_points = mesh.NF() * 3;
-	scene.n_elements = mesh.NE();
-
 	// Create vertex array object
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	
-	GLuint v_vbo;
-	GLuint vn_vbo;
-	GLuint vt_vbo;
-	GLuint ebuffer;
+
+	GLuint v_vbo, vn_vbo, vt_vbo, ebuffer;
 
 	glGenBuffers(1, &v_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
@@ -277,9 +274,9 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VN_vbo(0), GL_STATIC_DRAW);
 
-	//glGenBuffers(1, &vt_vbo);
-	//glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
+	glGenBuffers(1, &vt_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
 
 	if (use_elements)
 	{
@@ -289,10 +286,50 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	}
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
-	scene.program.Bind();	
+	scene.program.Bind();
 
 	scene.program.SetAttribBuffer("position", v_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	scene.program.SetAttribBuffer("textCoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+}
+
+void _bind_texture()
+{
+	// Load the texture
+	Material material(material_filename);
+
+	// Load the texture
+	/*GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mesh.get_texture_width(), mesh.get_texture_height(), 0, GL_RGB, GL_UNSIGNED_BYTE, mesh.get_texture_data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GLint sampler = glGetUniformLocation(scene.program.GetID(), "tex");
+	glUseProgram(scene.program.GetID());
+	glUniform1i(sampler, 0);
+	*/
+	
+	cyGLTexture2D texture;
+	texture.Initialize();
+	texture.SetImage(material.data_const_ptr(), 4, material.width(), material.height());
+	texture.BuildMipmaps();
+	texture.Bind(0);
+	scene.program["tex"] = 0;
+}
+
+void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
+{
+	scene.set_mesh(&mesh);
+	//scene.n_points = mesh.NV();
+	scene.n_points = mesh.NF() * 3;
+	scene.n_elements = mesh.NE();
+
+	_bind_buffers(mesh);
+	_bind_texture();
+	
+	
 	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		
 	// Some final point transformations 
