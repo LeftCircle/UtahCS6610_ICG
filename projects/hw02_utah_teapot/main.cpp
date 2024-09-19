@@ -16,6 +16,7 @@
 
 using namespace rc;
 
+const char* default_obj_path = "yoda\\yoda.obj";
 const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";
@@ -23,7 +24,7 @@ const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.pn
 
 GLScene scene;
 rc::SphericalDirectionalLight light;
-bool use_elements = true;
+bool use_elements = false;
 bool ctrl_held = false;
 
 // Create a bitflag for different lighting types
@@ -209,7 +210,7 @@ bool _are_command_arguments_valid_or_debug(int argc, char** argv)
 	if (argc != 2)
 	{
 		#ifdef _DEBUG
-		filename = "teapot.obj";
+		filename = default_obj_path;
 		return true;
 		#else
 		std::cerr << "NO FILENAME GIVEN!! Usage: " << argv[0] << " <filename.obj>" << std::endl;

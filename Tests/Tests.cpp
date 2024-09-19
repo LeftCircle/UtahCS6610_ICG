@@ -228,5 +228,21 @@ public:
 		matches = AreEqualWithTolerance(cy::Vec3f(0.0f, 0.0f, -1.0f), light.direction());
 	}
 };
+
+TEST_CLASS(TestMultipleMaterialsAndObjectGroups)
+{
+private:
+	const char* yoda_obj_path = "..\\projects\\hw02_utah_teapot\\yoda\\yoda.obj";
+public:
+	TEST_METHOD(TESTMaterialForDifferentGroups)
+	{
+		rc::rcTriMeshForGL yoda_mesh;
+		bool error = yoda_mesh.LoadFromFileObj(yoda_obj_path);
+		unsigned int expected_n_materials = 7;
+		Assert::AreEqual(expected_n_materials, yoda_mesh.NM(), L"Yoda mesh should have 7 materials");
+
+	}
+};
+
 } // namespace Tests
 
