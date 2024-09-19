@@ -115,7 +115,7 @@ void keyboard(unsigned char key, int x, int y)
 		{
 			shading_flag |= ShadingType::AMBIENT;
 			rcTriMeshForGL* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh->get_k_vec3f());
+			scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(mesh->M(0).Ka));
 		}
 	}
 	if (key == 's')
@@ -129,7 +129,7 @@ void keyboard(unsigned char key, int x, int y)
 		{
 			shading_flag |= ShadingType::SPECULAR;
 			rcTriMeshForGL* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh->get_k_vec3f());
+			scene.program.SetUniform("intensity_k_specular",cy::Vec3f(mesh->M(0).Ks));
 		}
 	}
 	if (key == 'd')
@@ -143,7 +143,7 @@ void keyboard(unsigned char key, int x, int y)
 		{
 			shading_flag |= ShadingType::DIFFUSE;
 			rcTriMeshForGL* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_diffuse", light.specular_intensity() * mesh->get_k_vec3f());
+			scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(mesh->M(0).Kd));
 		}
 	}
 
@@ -292,7 +292,7 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	scene.program.SetAttribBuffer("textCoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
-void _bind_texture()
+void _bind_texture(rc::rcTriMeshForGL& mesh)
 {
 	// Load the texture
 	Texture texture(brick_png_path);
@@ -316,6 +316,23 @@ void _bind_texture()
 	tex.BuildMipmaps();
 	tex.Bind(0);
 	scene.program["tex"] = 0;
+
+	// Now for the material parts
+	cy::TriMesh::Mtl const& mtl = mesh.M(0);
+	scene.program["intensity_k_diffuse"] = cy::Vec3f(mtl.Kd[0], mtl.Kd[1], mtl.Kd[2]);
+	scene.program["intensity_k_ambient"] = cy::Vec3f(mtl.Ka[0], mtl.Ka[1], mtl.Ka[2]);
+	scene.program["intensity_k_specular"] = cy::Vec3f(mtl.Ks[0], mtl.Ks[1], mtl.Ks[2]);
+	scene.program["shininess"] = mtl.Ns;
+
+	// Load the specular map
+	Texture specular_texture(brick_specular_png_path);
+	cyGLTexture2D spec_tex;
+	spec_tex.Initialize();
+	spec_tex.SetImage(specular_texture.data_const_ptr(), 4, specular_texture.width(), specular_texture.height());
+	spec_tex.BuildMipmaps();
+	spec_tex.Bind(1);
+	scene.program["specular_map"] = 1;
+
 }
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
@@ -326,7 +343,7 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.n_elements = mesh.NE();
 
 	_bind_buffers(mesh);
-	_bind_texture();
+	_bind_texture(mesh);
 	
 	
 	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -350,10 +367,10 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
 	
 	scene.program.SetUniform("light_direction", light.direction());
-	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
-	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
-	scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
-	scene.program.SetUniform("shininess", 200.0f);
+	//scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
+	//scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
+	//scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
+	//scene.program.SetUniform("shininess", 200.0f);
 }
 
 void init_camera()
