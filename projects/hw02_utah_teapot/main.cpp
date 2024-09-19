@@ -10,7 +10,7 @@
 #include "rcCodeBase/rcCore.hpp"
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcLights.hpp"
-#include "rcCodeBase/rcMaterial.h"
+#include "rcCodeBase/rcTexture.h"
 #include <iostream>
 
 
@@ -18,8 +18,7 @@ using namespace rc;
 
 const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
-//const char* brick_png_path = "assets\\texture_teapot\\brick.png";
-const char* brick_png_path = "other_brick.png";
+const char* brick_png_path = "assets\\texture_teapot\\brick.png";
 const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.png";
 
 GLScene scene;
@@ -296,7 +295,7 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 void _bind_texture()
 {
 	// Load the texture
-	Material material(material_filename);
+	Texture texture(brick_png_path);
 
 	// Load the texture
 	/*GLuint texture;
@@ -311,11 +310,11 @@ void _bind_texture()
 	glUniform1i(sampler, 0);
 	*/
 	
-	cyGLTexture2D texture;
-	texture.Initialize();
-	texture.SetImage(material.data_const_ptr(), 4, material.width(), material.height());
-	texture.BuildMipmaps();
-	texture.Bind(0);
+	cyGLTexture2D tex;
+	tex.Initialize();
+	tex.SetImage(texture.data_const_ptr(), 4, texture.width(), texture.height());
+	tex.BuildMipmaps();
+	tex.Bind(0);
 	scene.program["tex"] = 0;
 }
 

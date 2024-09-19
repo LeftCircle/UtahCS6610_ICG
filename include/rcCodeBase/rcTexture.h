@@ -24,7 +24,7 @@ void decodeTwoSteps(const char* filename) {
   //the pixels are now in the vector "image", 4 bytes per pixel, ordered RGBARGBA..., use it as texture, draw it, ...
 }
 
-class Material {
+class Texture{
 private:
     unsigned int _width, _height;
     std::vector<unsigned char> _data;
@@ -45,8 +45,8 @@ private:
     }
 
 public:
-    Material(const char* texture_file) {
-        decodeTwoSteps(texture_file);
+    Texture(const char* texture_file) {
+        decodeOneStep(texture_file);
     }
 
     unsigned int width() const { return _width; }

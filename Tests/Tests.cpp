@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "CppUnitTest.h"
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 // rc codebase includes
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcOpenGLScene.hpp"
