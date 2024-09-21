@@ -5,6 +5,7 @@
 #include "cyCodeBase/cyTriMesh.h"
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyIVector.h"
+#include "rcCodeBase/Stuart.h"
 #include <unordered_map>
 
 namespace rc
@@ -169,6 +170,18 @@ public:
 		memcpy(vn_vbo, _vn_vbo.data(), sizeof(cy::Vec3f) * _vn_vbo.size());
 		memcpy(vt_vbo, _vt_vbo.data(), sizeof(cy::Vec3f) * _vt_vbo.size());
 		memcpy(elements, _elements.data(), sizeof(int) * _elements.size());
+	}
+
+	void obj_to_gl_elements() {
+		auto data = transformObjToGL(*this);
+		
+		SetNumElements((unsigned int)data._elements.size());
+		SetVBOSize((unsigned int)data._v_vbo.size());
+
+		memcpy(v_vbo, data._v_vbo.data(), sizeof(cy::Vec3f) * data._v_vbo.size());
+		memcpy(vn_vbo, data._vn_vbo.data(), sizeof(cy::Vec3f) * data._vn_vbo.size());
+		memcpy(vt_vbo, data._vt_vbo.data(), sizeof(cy::Vec3f) * data._vt_vbo.size());
+		memcpy(elements, data._elements.data(), sizeof(int) * data._elements.size());
 	}
 
 	void SetNumElements(unsigned int n) { Allocate(n, elements, n_elements); };

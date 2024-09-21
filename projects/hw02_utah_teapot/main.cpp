@@ -17,6 +17,7 @@
 using namespace rc;
 
 const char* default_obj_path = "yoda\\yoda.obj";
+//const char* default_obj_path = "teapot.obj";
 const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";
@@ -24,7 +25,7 @@ const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.pn
 
 GLScene scene;
 rc::SphericalDirectionalLight light;
-bool use_elements = false;
+bool use_elements = true;
 bool ctrl_held = false;
 
 // Create a bitflag for different lighting types
@@ -404,7 +405,7 @@ int main(int argc, char** argv)
 	}
 	if (use_elements)
 	{
-		mesh.create_vbo_data_and_elements();
+		mesh.obj_to_gl_elements();
 	}
 	else
 	{

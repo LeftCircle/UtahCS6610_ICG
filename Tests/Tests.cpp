@@ -6,6 +6,7 @@
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcOpenGLScene.hpp"
 #include "rcCodeBase/rcLights.hpp"
+#include "rcCodeBase/Stuart.h"
 
 // cy codebase includes
 #include "cyCodeBase/cyVector.h"
@@ -15,9 +16,14 @@
 #include <cwchar>
 #include <iomanip>
 #include <cmath>
+#include <filesystem>
 
-const char* test_file_path = "E:\\Programming\\OpenGL\\Projects\\ICG_Utah\\Tests\\test_objs\\simple_obj.obj";
-const char* teapot_file_path = "C:\\Programming\\OpenGL\\UtahCS6610_ICG\\projects\\hw02_utah_teapot\\teapot.obj";
+//const char* test_file_path = "E:\\Programming\\OpenGL\\Projects\\ICG_Utah\\Tests\\test_objs\\simple_obj.obj";
+// macro to get the path that this file is in
+std::string cur_folder = std::filesystem::path(__FILE__).parent_path().string() + "\\";
+
+std::string test_file_path = cur_folder + "test_objs\\simple_obj.obj";
+//const char* teapot_file_path = "C:\\Programming\\OpenGL\\UtahCS6610_ICG\\projects\\hw02_utah_teapot\\teapot.obj";
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -69,7 +75,7 @@ public:
 	TEST_METHOD(TESTFileIsLoaded)
 	{
 		rc::rcTriMeshForGL test_class;
-		Assert::IsTrue(test_class.LoadFromFileObj(test_file_path));
+		Assert::IsTrue(test_class.LoadFromFileObj(test_file_path.c_str()));
 	}
 
 	TEST_METHOD(TESTcreate_vbos_and_element_buffer)
@@ -116,40 +122,42 @@ public:
 			6, 1, 7
 		};
 
-		rc::rcTriMeshForGL test_tri_mesh;
-		test_tri_mesh.LoadFromFileObj(test_file_path);
-		test_tri_mesh.create_vbo_data_and_elements();
-		Assert::AreEqual(expected_element_buffer_size, int(test_tri_mesh.get_n_elements()));
-		Assert::AreEqual(int(test_tri_mesh.get_vbo_size()), expected_vbo_size);
+		cy::TriMesh test_tri_mesh;
+		test_tri_mesh.LoadFromFileObj(test_file_path.c_str());
+		//test_tri_mesh.create_vbo_data_and_elements();
+		GlElementArrayData element_data = transformObjToGL(test_tri_mesh);
+		
+		Assert::AreEqual(expected_element_buffer_size, int(element_data._elements.size()));
+		Assert::AreEqual(expected_vbo_size, int(element_data._v_vbo.size()));
 
-		// check that the vbo's and elements match by looping through each element and ensuring they are the same
-		cy::Vec3f v_vbo0 = test_tri_mesh.V_vbo(0);
+		//// check that the vbo's and elements match by looping through each element and ensuring they are the same
+		cy::Vec3f v_vbo0 = element_data._v_vbo[0];
 		cy::Vec3f expected_vbo0 = expected_vbo_vertices[0];
 		wchar_t error_msg[100];
 		for (int i = 0; i < expected_vbo_size; i++)
 		{
 			// Vertex Coordinates
-			cy::Vec3f a_v = test_tri_mesh.V_vbo(i);
+			cy::Vec3f a_v = element_data._v_vbo[i];
 			cy::Vec3f e_v = expected_vbo_vertices[i];
 			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Vertex mismatch at index %d", i);
 			Assert::AreEqual(e_v, a_v, error_msg);
 
 			// Normals
-			cy::Vec3f a_n = test_tri_mesh.VN_vbo(i);
+			cy::Vec3f a_n = element_data._vn_vbo[i];
 			cy::Vec3f e_n = expected_vbo_normals[i];
 			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Normal mismatch at index %d", i);
 			Assert::AreEqual(e_n, a_n, error_msg);
 
 			// Texture Coordinates
-			cy::Vec3f a_t = test_tri_mesh.VT_vbo(i);
+			cy::Vec3f a_t = element_data._vt_vbo[i];
 			cy::Vec3f e_t = expected_vbo_texcoords[i];
 			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Texture Coordinate mismatch at index %d", i);
 			Assert::AreEqual(e_t, a_t, error_msg);
 		}
 		for (int i = 0; i < expected_element_buffer_size; i++)
 		{
-			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Element mismatch at index %d. Expected: %d Actual: %d", i, expected_element_buffer[i], test_tri_mesh.E(i));
-			Assert::AreEqual(expected_element_buffer[i], test_tri_mesh.E(i), error_msg);
+			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Element mismatch at index %d. Expected: %d Actual: %d", i, expected_element_buffer[i], element_data._elements[i]);
+			Assert::AreEqual(expected_element_buffer[i], element_data._elements[i], error_msg);
 		}
 	}
 }; // class Tests
