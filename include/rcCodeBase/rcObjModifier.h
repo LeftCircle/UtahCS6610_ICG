@@ -5,7 +5,7 @@
 #include "cyCodeBase/cyTriMesh.h"
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyIVector.h"
-#include "rcCodeBase/Stuart.h"
+#include "rcCodeBase/rcObjToGlFunc.h"
 #include <unordered_map>
 
 namespace rc

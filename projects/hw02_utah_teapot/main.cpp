@@ -16,8 +16,8 @@
 
 using namespace rc;
 
-const char* default_obj_path = "yoda\\yoda.obj";
-//const char* default_obj_path = "teapot.obj";
+//const char* default_obj_path = "yoda\\yoda.obj";
+const char* default_obj_path = "teapot.obj";
 const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";

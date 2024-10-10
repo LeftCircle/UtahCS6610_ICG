@@ -1,5 +1,5 @@
-#ifndef STUART_H
-#define STUART_H
+#ifndef RC_OBJ_TO_GL_FUNC_H
+#define RC_OBJ_TO_GL_FUNC_H
 #include <unordered_map>
 
 #include "cyCodebase/cyTrimesh.h"
