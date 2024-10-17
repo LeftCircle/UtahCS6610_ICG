@@ -6,7 +6,7 @@
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcOpenGLScene.hpp"
 #include "rcCodeBase/rcLights.hpp"
-#include "rcCodeBase/Stuart.h"
+#include "rcCodeBase/rcObjToGlFunc.h"
 
 // cy codebase includes
 #include "cyCodeBase/cyVector.h"
@@ -23,6 +23,7 @@
 std::string cur_folder = std::filesystem::path(__FILE__).parent_path().string() + "\\";
 
 std::string test_file_path = cur_folder + "test_objs\\simple_obj.obj";
+std::string yoda_file_path = cur_folder + "test_objs\\yoda\\yoda.obj";
 //const char* teapot_file_path = "C:\\Programming\\OpenGL\\UtahCS6610_ICG\\projects\\hw02_utah_teapot\\teapot.obj";
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -75,7 +76,7 @@ public:
 	TEST_METHOD(TESTFileIsLoaded)
 	{
 		rc::rcTriMeshForGL test_class;
-		Assert::IsTrue(test_class.LoadFromFileObj(test_file_path.c_str()));
+		Assert::IsTrue(test_class.LoadFromFileObj(yoda_file_path.c_str()));
 	}
 
 	TEST_METHOD(TESTcreate_vbos_and_element_buffer)
