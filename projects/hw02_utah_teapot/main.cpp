@@ -13,6 +13,7 @@
 #include "rcCodeBase/rcTexture.h"
 #include "rcCodeBase/objForGl.hpp"
 #include "rcCodeBase/objLoader.hpp"
+#include "rcCodeBase/rcMath.hpp"
 #include <iostream>
 
 
@@ -119,7 +120,8 @@ void keyboard(unsigned char key, int x, int y)
 		{
 			shading_flag |= ShadingType::AMBIENT;
 			GLMesh* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(mesh->M(0).Ka));
+			// Temporary removing until we get the points to load, then we can work with materials
+			//scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(mesh->M(0).Ka));
 		}
 	}
 	if (key == 's')
@@ -133,7 +135,8 @@ void keyboard(unsigned char key, int x, int y)
 		{
 			shading_flag |= ShadingType::SPECULAR;
 			GLMesh* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_specular",cy::Vec3f(mesh->M(0).Ks));
+			// Temporary removing until we get the points to load, then we can work with materials
+			//scene.program.SetUniform("intensity_k_specular",cy::Vec3f(mesh->M(0).Ks));
 		}
 	}
 	if (key == 'd')
@@ -147,7 +150,8 @@ void keyboard(unsigned char key, int x, int y)
 		{
 			shading_flag |= ShadingType::DIFFUSE;
 			GLMesh* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(mesh->M(0).Kd));
+			// Temporary removing until we get the points to load, then we can work with materials
+			//scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(mesh->M(0).Kd));
 		}
 	}
 
@@ -322,11 +326,12 @@ void _bind_texture(rc::GLMesh& mesh)
 	scene.program["tex"] = 0;
 
 	// Now for the material parts
-	cy::TriMesh::Mtl const& mtl = mesh.M(0);
+	// Temporary removing until we get the points to load, then we can work with materials
+	/*cy::TriMesh::Mtl const& mtl = mesh.M(0);
 	scene.program["intensity_k_diffuse"] = cy::Vec3f(mtl.Kd[0], mtl.Kd[1], mtl.Kd[2]);
 	scene.program["intensity_k_ambient"] = cy::Vec3f(mtl.Ka[0], mtl.Ka[1], mtl.Ka[2]);
 	scene.program["intensity_k_specular"] = cy::Vec3f(mtl.Ks[0], mtl.Ks[1], mtl.Ks[2]);
-	scene.program["shininess"] = mtl.Ns;
+	scene.program["shininess"] = mtl.Ns;*/
 
 	// Load the specular map
 	Texture specular_texture(brick_specular_png_path);
@@ -342,28 +347,25 @@ void _bind_texture(rc::GLMesh& mesh)
 void init_points_from_mesh(rc::GLMesh& mesh)
 {
 	scene.set_mesh(&mesh);
-	//scene.n_points = mesh.NV();
 	scene.n_points = mesh.NF() * 3;
 	scene.n_elements = mesh.NE();
 
 	_bind_buffers(mesh);
 	_bind_texture(mesh);
-	
-	
-	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
 	scene.point_transform = cy::Matrix4f::RotationX(-PI_OVER_2);
 
 	// Center the object using the bounding box
-	mesh.ComputeBoundingBox();
-	cy::Vec3f bounding_box_center = (mesh.GetBoundMin() + mesh.GetBoundMax()) / 2.0f;
+	rc::AABB aabb = rc::get_aabb(mesh.getVertices());
+	cy::Vec3f max = cy::Vec3f(aabb.max[0], aabb.max[1], aabb.max[2]);
+	cy::Vec3f min = cy::Vec3f(aabb.min[0], aabb.min[1], aabb.min[2]);
+	cy::Vec3f bounding_box_center = (min + max) / 2.0f;
 	bounding_box_center = cy::Vec3f(cy::Matrix4f::RotationX(-PI_OVER_2) * bounding_box_center);
 	scene.point_transform.AddTranslation(-bounding_box_center);
 
 	// Add some lights!
-	mesh.set_k(1.0f, 0.0, 0.0);
 	light.set_spherical_position(0.0f, 90.0f);
 	light.SetRotation(cy::Matrix4f::RotationX(PI_OVER_2));
 	light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
@@ -416,7 +418,7 @@ int main(int argc, char** argv)
 		gl_mesh.transformObjToGL(obj_mesh);
 		gl_meshes.push_back(gl_mesh);
 	}
-	const rc::GLMesh& gl_mesh = gl_meshes[0];
+	rc::GLMesh& gl_mesh = gl_meshes[0];
 	init_window(argc, argv);
 	init_points_from_mesh(gl_mesh);
 	init_camera();

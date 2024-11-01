@@ -16,27 +16,19 @@ namespace rc
 
 	struct Material
 	{
-		Material() { name = ""; ka = Vector3(); kd = Vector3(); ks = Vector3(); ns = 0; };
+		Material() { 
+			name = "";
+			ka[0] = ka[1] = ka[2] = 0.0f;
+			kd[0] = ka[1] = ka[2] = 0.0f;
+			ks[0] = ka[1] = ka[2] = 0.0f;
+			ns = 0; };
 
 		std::string name;
-		// ambient
-		Vector3 ka;
-		// diffuse
-		Vector3 kd;
-		// specular
-		Vector3 ks;
-		// specular exponent
-		float ns;
+		float ka[3]; // ambient
+		float kd[3]; // diffuse
+		float ks[3]; // specular
+		float ns; // specular exponent
 	};
-
-	/*struct Vertex
-	{
-		Vertex() { position = Vector3(); normal = Vector3(); tex_coord = Vector3(); };
-		Vertex(Vector3 position_, Vector3 normal_, Vector3 tex_coord_) { position = position_; normal = normal_; tex_coord = tex_coord_; };
-		Vector3 position;
-		Vector3 normal;
-		Vector3 tex_coord;
-	};*/
 
 	// This holds the index into the array for either vertices, normals, or textures for each face.
 	struct ObjFaceIndeces {
@@ -109,6 +101,7 @@ namespace rc {
 		std::vector<Vector3> _normals;
 		std::vector<Vector3> _tex_coords;
 		std::vector<int> _elements;
+		Material _material;
 		unsigned int _n_faces;
 
 		void _add_new_vtn_and_element(
