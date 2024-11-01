@@ -7,6 +7,7 @@
 #include "rcCodeBase/rcCamera.hpp"
 #include "rcCodeBase/rcObjModifier.h"
 #include "cyCodeBase/cyGL.h"
+#include "rcCodeBase/objForGL.hpp"
 
 namespace rc
 {
@@ -16,7 +17,7 @@ protected:
 	cy::Matrix4f mvp = cy::Matrix4f::Identity();
 	cy::Matrix4f mv_points = cy::Matrix4f::Identity();
 	cy::Matrix3f mv_normals = cy::Matrix3f::Identity();
-	rcTriMeshForGL* _mesh;
+	GLMesh* _mesh;
 public:
 	GLScene() : _mesh(nullptr) {}
 
@@ -39,8 +40,8 @@ public:
 	unsigned int n_elements = 0;
 	unsigned int n_points = 0;
 
-	void set_mesh(rcTriMeshForGL* mesh) { _mesh = mesh; }
-	rcTriMeshForGL* get_mesh() { return _mesh; }
+	void set_mesh(GLMesh* mesh) { _mesh = mesh; }
+	GLMesh* get_mesh() { return _mesh; }
 
 	void set_mvp()
 	{

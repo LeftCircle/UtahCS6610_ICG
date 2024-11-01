@@ -11,6 +11,8 @@
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcLights.hpp"
 #include "rcCodeBase/rcTexture.h"
+#include "rcCodeBase/objForGl.hpp"
+#include "rcCodeBase/objLoader.hpp"
 #include <iostream>
 
 
@@ -116,7 +118,7 @@ void keyboard(unsigned char key, int x, int y)
 		else
 		{
 			shading_flag |= ShadingType::AMBIENT;
-			rcTriMeshForGL* mesh = scene.get_mesh();
+			GLMesh* mesh = scene.get_mesh();
 			scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(mesh->M(0).Ka));
 		}
 	}
@@ -130,7 +132,7 @@ void keyboard(unsigned char key, int x, int y)
 		else
 		{
 			shading_flag |= ShadingType::SPECULAR;
-			rcTriMeshForGL* mesh = scene.get_mesh();
+			GLMesh* mesh = scene.get_mesh();
 			scene.program.SetUniform("intensity_k_specular",cy::Vec3f(mesh->M(0).Ks));
 		}
 	}
@@ -144,7 +146,7 @@ void keyboard(unsigned char key, int x, int y)
 		else
 		{
 			shading_flag |= ShadingType::DIFFUSE;
-			rcTriMeshForGL* mesh = scene.get_mesh();
+			GLMesh* mesh = scene.get_mesh();
 			scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(mesh->M(0).Kd));
 		}
 	}
@@ -258,7 +260,7 @@ void bind_glut_functions()
 	glutMotionFunc(mouse_motion);
 }
 
-void _bind_buffers(rc::rcTriMeshForGL& mesh)
+void _bind_buffers(rc::GLMesh& mesh)
 {
 	// Create vertex array object
 	GLuint vao;
@@ -269,21 +271,21 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 
 	glGenBuffers(1, &v_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.V_vbo(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &vn_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VN_vbo(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &vt_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NT(), &mesh.T(0), GL_STATIC_DRAW);
 
 	if (use_elements)
 	{
 		glGenBuffers(1, &ebuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.NE(), &mesh.E(0), GL_STATIC_DRAW);
 	}
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
@@ -294,7 +296,7 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	scene.program.SetAttribBuffer("textCoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
-void _bind_texture(rc::rcTriMeshForGL& mesh)
+void _bind_texture(rc::GLMesh& mesh)
 {
 	// Load the texture
 	Texture texture(brick_png_path);
@@ -337,7 +339,7 @@ void _bind_texture(rc::rcTriMeshForGL& mesh)
 
 }
 
-void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
+void init_points_from_mesh(rc::GLMesh& mesh)
 {
 	scene.set_mesh(&mesh);
 	//scene.n_points = mesh.NV();
@@ -396,23 +398,27 @@ int main(int argc, char** argv)
 	{
 		return 1;
 	}
-	rc::rcTriMeshForGL mesh;
-	bool success = mesh.LoadFromFileObj(filename);
+	// Load the mesh with the custom obj loader
+	ObjLoader obj_loader;
+	bool success = obj_loader.loadObjFile(filename);
+
 	if (!success)
 	{
 		std::cerr << "Error loading file: " << filename << std::endl;
 		return 1;
 	}
-	if (use_elements)
+	const std::vector<rc::ObjMesh>& obj_meshes = obj_loader.getObjMeshes();
+	std::vector<rc::GLMesh> gl_meshes;
+	gl_meshes.reserve(obj_meshes.size());
+	for (const rc::ObjMesh& obj_mesh : obj_meshes)
 	{
-		mesh.obj_to_gl_elements();
+		rc::GLMesh gl_mesh;
+		gl_mesh.transformObjToGL(obj_mesh);
+		gl_meshes.push_back(gl_mesh);
 	}
-	else
-	{
-		mesh.create_vbo_data_for_draw_arrays();
-	}
+	const rc::GLMesh& gl_mesh = gl_meshes[0];
 	init_window(argc, argv);
-	init_points_from_mesh(mesh);
+	init_points_from_mesh(gl_mesh);
 	init_camera();
 	bind_glut_functions();
 

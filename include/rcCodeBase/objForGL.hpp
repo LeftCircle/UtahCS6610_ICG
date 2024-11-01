@@ -109,6 +109,7 @@ namespace rc {
 		std::vector<Vector3> _normals;
 		std::vector<Vector3> _tex_coords;
 		std::vector<int> _elements;
+		unsigned int _n_faces;
 
 		void _add_new_vtn_and_element(
 			const Vector3& v,
@@ -166,9 +167,9 @@ namespace rc {
 			std::unordered_map<pointIndeces, int> locations;
 			locations.reserve(3 * mesh.NV());
 
-			const unsigned int n_faces = mesh.NF();
+			_n_faces = mesh.NF();
 
-			for (int i = 0; i < n_faces; ++i) {
+			for (int i = 0; i < _n_faces; ++i) {
 				_create_faces_and_add_values(mesh, locations, i);
 			}
 		};
@@ -181,8 +182,13 @@ namespace rc {
 		const int NV() const { return _vertices.size(); };
 		const int NE() const { return _elements.size(); };
 		const int NN() const { return _normals.size(); };
-		const int NT() const { return _tex_coords.size();
-		};
+		const int NT() const { return _tex_coords.size(); };
+		const unsigned int NF() { return _n_faces; };
+		const Vector3& V(const int i) const { return _vertices[i]; };
+		const Vector3& N(const int i) const { return _normals[i]; };
+		const Vector3& T(const int i) const { return _tex_coords[i]; };
+		const int& E(const int i) const { return _elements[i]; };
+		
 	};
 }
 #endif // OBJ_FOR_GL_HPP
