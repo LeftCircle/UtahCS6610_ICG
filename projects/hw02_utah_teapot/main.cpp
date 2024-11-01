@@ -40,7 +40,7 @@ unsigned int shading_flag = ShadingType::AMBIENT | ShadingType::DIFFUSE | Shadin
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
 
-void rotate_light(int dx, int dy)
+void rotate_light(float dx, float dy)
 {
 	light.add_rotation_and_get_direction(-dx, -dy);
 	scene.program.SetUniform("light_direction", light.direction());
@@ -55,15 +55,15 @@ void mouse_motion(int x, int y)
 	
 	if (can_rotate_obj)
 	{
-		int dx = x - scene.mouse_position.x;
-		int dy = y - scene.mouse_position.y;
+		float dx = static_cast<float>(x - scene.mouse_position.x);
+		float dy = static_cast<float>(y - scene.mouse_position.y);
 	
 		scene.camera.rotate_about_og_up(-dx, -dy);
 	}
 	if (can_rotate_light)
 	{
-		int dx = x - scene.mouse_position.x;
-		int dy = y - scene.mouse_position.y;
+		float dx = static_cast<float>(x - scene.mouse_position.x);
+		float dy = static_cast<float>(y - scene.mouse_position.y);
 		rotate_light(dx, dy);
 	}
 	scene.mouse_position.Set(x, y);
