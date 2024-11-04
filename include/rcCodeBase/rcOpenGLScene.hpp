@@ -8,6 +8,7 @@
 #include "rcCodeBase/rcObjModifier.h"
 #include "cyCodeBase/cyGL.h"
 #include "rcCodeBase/objForGL.hpp"
+#include <vector>
 
 namespace rc
 {
@@ -17,6 +18,11 @@ protected:
 	cy::Matrix4f mvp = cy::Matrix4f::Identity();
 	cy::Matrix4f mv_points = cy::Matrix4f::Identity();
 	cy::Matrix3f mv_normals = cy::Matrix3f::Identity();
+	
+	// The idea here is to have all of our meshes, transforms, and cameras in one place
+	std::vector<GLMesh> _meshes;
+	std::vector<cy::Matrix4f> _point_transforms;
+	std::vector<Camera> _cameras;
 	GLMesh* _mesh;
 public:
 	GLScene() : _mesh(nullptr) {}

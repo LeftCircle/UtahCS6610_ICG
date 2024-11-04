@@ -275,15 +275,18 @@ void _bind_buffers(rc::GLMesh& mesh)
 
 	glGenBuffers(1, &v_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &vn_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &vt_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NT(), &mesh.T(0), GL_STATIC_DRAW);
+	//glGenBuffers(1, &vt_vbo);
+	//glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NT(), &mesh.T(0), GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3) * mesh.NT(), &mesh.T(0), GL_STATIC_DRAW);
 
 	if (use_elements)
 	{
@@ -291,13 +294,10 @@ void _bind_buffers(rc::GLMesh& mesh)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.NE(), &mesh.E(0), GL_STATIC_DRAW);
 	}
-	// Load the shaders with cy calls
-	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
-	scene.program.Bind();
 
 	scene.program.SetAttribBuffer("position", v_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	scene.program.SetAttribBuffer("textCoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//scene.program.SetAttribBuffer("textCoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 void _bind_texture(rc::GLMesh& mesh)
@@ -351,7 +351,8 @@ void init_points_from_mesh(rc::GLMesh& mesh)
 	scene.n_elements = mesh.NE();
 
 	_bind_buffers(mesh);
-	_bind_texture(mesh);
+	// Removing textures for now until we figure out how to work with them
+	//_bind_texture(mesh);
 		
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
@@ -364,14 +365,18 @@ void init_points_from_mesh(rc::GLMesh& mesh)
 	cy::Vec3f bounding_box_center = (min + max) / 2.0f;
 	bounding_box_center = cy::Vec3f(cy::Matrix4f::RotationX(-PI_OVER_2) * bounding_box_center);
 	scene.point_transform.AddTranslation(-bounding_box_center);
+}
 
+void add_default_light() {
 	// Add some lights!
 	light.set_spherical_position(0.0f, 90.0f);
 	light.SetRotation(cy::Matrix4f::RotationX(PI_OVER_2));
-	light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
-	light.set_specular_intensity(cy::Vec3f(0.5f, 0.5f, 0.5f));
-	light.set_diffuse_intensity(cy::Vec3f(0.85f));
 	
+	
+	/*light.set_ambient_intensity(cy::Vec3f(0.1f, 0.1f, 0.1f));
+	light.set_specular_intensity(cy::Vec3f(0.5f, 0.5f, 0.5f));
+	light.set_diffuse_intensity(cy::Vec3f(0.85f));*/
+
 	scene.program.SetUniform("light_direction", light.direction());
 	//scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
 	//scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
@@ -400,6 +405,7 @@ int main(int argc, char** argv)
 	{
 		return 1;
 	}
+	
 	// Load the mesh with the custom obj loader
 	ObjLoader obj_loader;
 	bool success = obj_loader.loadObjFile(filename);
@@ -420,6 +426,9 @@ int main(int argc, char** argv)
 	}
 	rc::GLMesh& gl_mesh = gl_meshes[0];
 	init_window(argc, argv);
+	// Load the shaders with cy calls. Has to come after the window is initialized
+	bool shader_comp_success = scene.program.BuildFiles("normal_shader.vert", "normal_shader.frag");
+	scene.program.Bind();
 	init_points_from_mesh(gl_mesh);
 	init_camera();
 	bind_glut_functions();
