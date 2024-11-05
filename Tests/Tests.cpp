@@ -7,6 +7,8 @@
 #include "rcCodeBase/rcOpenGLScene.hpp"
 #include "rcCodeBase/rcLights.hpp"
 #include "rcCodeBase/rcObjToGlFunc.h"
+#include "rcCodeBase/objForGL.hpp"
+#include "rcCodeBase/ObjLoader.hpp"
 
 // cy codebase includes
 #include "cyCodeBase/cyVector.h"
@@ -249,6 +251,47 @@ public:
 		bool error = yoda_mesh.LoadFromFileObj(yoda_obj_path);
 		unsigned int expected_n_materials = 7;
 		Assert::AreEqual(expected_n_materials, yoda_mesh.NM(), L"Yoda mesh should have 7 materials");
+
+	}
+};
+
+TEST_CLASS(TESTCustomMaterialReader)
+{
+private:
+	const char* teapot_path = "..\\projects\\hw02_utah_teapot\\teapot.obj";
+public:
+	TEST_METHOD(TESTMaterialHolderSubclasses)
+	{
+		rc::ObjMesh mesh = rc::ObjMesh();
+		rc::ObjMesh* mesh_b = new rc::ObjMesh();
+		// assert that the material is a nullptr
+		Assert::IsNull(mesh.get_material_ptr(), L"Material should be nullptr");
+
+		// Create a new material and set it to the mesh
+		rc::Material* new_material = new rc::Material();
+		mesh.set_material(new_material);
+		Assert::IsNotNull(mesh.get_material_ptr(), L"Material should not be nullptr");
+		
+		// Pass the material to mesh b
+		mesh_b->set_material(mesh.release_material());
+		Assert::IsNull(mesh.get_material_ptr(), L"Material should be nullptr");
+		Assert::IsNotNull(mesh_b->get_material_ptr(), L"Material should not be nullptr");
+	}
+
+
+	TEST_METHOD(TESTMaterialReader)
+	{
+		ObjLoader obj_loader;
+		Assert::IsTrue(obj_loader.loadObjFile(teapot_path), L"Teapot obj file should load");
+		std::vector<rc::ObjMesh> meshes = obj_loader.getObjMeshes();
+		Assert::AreEqual(1, int(meshes.size()), L"Teapot obj file should have 1 mesh");
+		rc::ObjMesh& teapot_mesh = meshes[0];
+		/*unsigned int n_materials = teapot_mesh.NM();
+		Assert::AreEqual(1, int(n_materials), L"Teapot obj file should have 1 material");
+		rc::Material& teapot_material = teapot_mesh.get_material(0);
+		std::string expected_material_name = "default";
+		Assert::AreEqual(expected_material_name, teapot_material.name, L"Material name should be 'default'");*/
+
 
 	}
 };

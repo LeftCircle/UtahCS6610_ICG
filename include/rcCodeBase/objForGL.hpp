@@ -21,13 +21,18 @@ namespace rc
 			ka[0] = ka[1] = ka[2] = 0.0f;
 			kd[0] = ka[1] = ka[2] = 0.0f;
 			ks[0] = ka[1] = ka[2] = 0.0f;
-			ns = 0; };
+			ns = 0;
+		};
 
 		std::string name;
 		float ka[3]; // ambient
 		float kd[3]; // diffuse
 		float ks[3]; // specular
 		float ns; // specular exponent
+
+		std::string map_kd; // diffuse texture map
+		std::string map_ks; // specular texture map
+		std::string map_ka; // ambient texture map
 	};
 
 	// This holds the index into the array for either vertices, normals, or textures for each face.
@@ -61,13 +66,38 @@ namespace std {
 }
 
 namespace rc {
-	// This holds the data in the obj file to be converted into a glMesh. 
-	class ObjMesh
+
+	class MaterialHolder
 	{
-	private:
+	protected:
+		Material* _material;
 
 	public:
-		ObjMesh() { group_name = ""; };
+		MaterialHolder() { _material = nullptr; };
+		~MaterialHolder() { if (_material) delete _material; };
+
+		void set_material(Material* material) {
+			if (_material) delete _material;
+			_material = material;
+		};
+
+		Material* release_material() {
+			Material* temp = _material;
+			_material = nullptr;
+			return temp;
+		};
+
+		const Material& get_material() const { return *_material; };
+		const Material* get_material_ptr() const { return _material; };
+	};
+
+	// This holds the data in the obj file to be converted into a glMesh. 
+	class ObjMesh : public MaterialHolder
+	{
+	public:
+		ObjMesh() : MaterialHolder() { group_name = ""; };
+		~ObjMesh() = default;
+
 		std::string group_name;
 		std::vector<Vector3> vertices;
 		std::vector<Vector3> normals;
@@ -86,6 +116,7 @@ namespace rc {
 		const Vector3& V(const int i) const { return vertices[i]; };
 		const Vector3& VN(const int i) const { return normals[i]; };
 		const Vector3& VT(const int i) const { return tex_coords[i]; };
+
 	};
 
 
@@ -94,14 +125,14 @@ namespace rc {
 
 	// Might be better to create an obj to glMesh class that takes an objMesh and converts it to a glMesh
 	// This way we can keep the GlMesh class simple and not have to worry about conversion functions
-	class GLMesh
+	class GLMesh : public MaterialHolder
 	{
 	private:
 		std::vector<Vector3> _vertices;
 		std::vector<Vector3> _normals;
 		std::vector<Vector3> _tex_coords;
 		std::vector<int> _elements;
-		Material _material;
+		Material* _material;
 		unsigned int _n_faces;
 
 		void _add_new_vtn_and_element(
@@ -156,6 +187,9 @@ namespace rc {
 		};
 
 	public:
+		GLMesh() : MaterialHolder() {};
+		~GLMesh() = default;
+
 		void transformObjToGL(const ObjMesh& mesh) {
 			std::unordered_map<pointIndeces, int> locations;
 			locations.reserve(3 * mesh.NV());
