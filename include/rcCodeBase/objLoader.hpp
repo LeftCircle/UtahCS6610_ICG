@@ -1,6 +1,11 @@
 #ifndef OBJLOADER_H
 #define OBJLOADER_H
 
+// add pch.h if it exists
+#ifdef PCH_H
+#include "pch.h"
+#endif
+
 #include "objForGL.hpp"
 #include "rcVector.hpp"
 

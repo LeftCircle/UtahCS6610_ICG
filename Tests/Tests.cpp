@@ -9,6 +9,7 @@
 #include "rcCodeBase/rcObjToGlFunc.h"
 #include "rcCodeBase/objForGL.hpp"
 #include "rcCodeBase/ObjLoader.hpp"
+#include "rcCodeBase/rcMaterial.hpp"
 
 // cy codebase includes
 #include "cyCodeBase/cyVector.h"

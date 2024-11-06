@@ -201,4 +201,4 @@ void ObjLoader::_add_faces_to_mesh_with_vtn_strings(rc::ObjMesh& mesh,
 		mesh.vertex_faces.push_back(v_face);
 		mesh.tex_coord_faces.push_back(vt_face);
 		mesh.normal_faces.push_back(vn_face);
-	}
+}

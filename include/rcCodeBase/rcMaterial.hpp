@@ -3,6 +3,7 @@
 
 #include <string>
 
+namespace rc{
 struct Material
 	{
 		Material() { 
@@ -23,5 +24,6 @@ struct Material
 		std::string map_ks; // specular texture map
 		std::string map_ka; // ambient texture map
 	};
+}
 
 #endif

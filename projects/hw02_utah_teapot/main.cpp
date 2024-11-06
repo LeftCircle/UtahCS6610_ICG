@@ -14,6 +14,7 @@
 #include "rcCodeBase/objForGl.hpp"
 #include "rcCodeBase/objLoader.hpp"
 #include "rcCodeBase/rcMath.hpp"
+#include "rcCodeBase/rcVector.hpp"
 #include <iostream>
 
 
@@ -276,12 +277,12 @@ void _bind_buffers(rc::GLMesh& mesh)
 	glGenBuffers(1, &v_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3f) * mesh.NV(), &mesh.V(0), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &vn_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rc::Vector3f) * mesh.NN(), &mesh.N(0), GL_STATIC_DRAW);
 
 	//glGenBuffers(1, &vt_vbo);
 	//glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
