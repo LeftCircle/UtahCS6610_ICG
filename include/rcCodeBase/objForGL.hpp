@@ -54,9 +54,9 @@ namespace rc {
 		ObjMesh& operator=(ObjMesh&&) noexcept;
 		void swap(ObjMesh& other);
 
-		// Delete operations?
-		ObjMesh(const ObjMesh&) = delete;
-		ObjMesh& operator=(const ObjMesh&) = delete;
+		// // Delete operations?
+		// ObjMesh(const ObjMesh&) = delete;
+		// ObjMesh& operator=(const ObjMesh&) = delete;
 
 
 		std::string group_name;

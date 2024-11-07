@@ -2,19 +2,6 @@
 
 using namespace rc;
 
-
-// MaterialHolder Base Class Functions
-void MaterialHolder::set_material(Material* material) {
-	if (_material) delete _material;
-	_material = material;
-};
-
-Material* MaterialHolder::release_material() {
-	Material* temp = _material;
-	_material = nullptr;
-	return temp;
-};
-
 void GLMesh::_add_new_vtn_and_element(const Vector3f& v,
 									  const Vector3f& n,
 									  const Vector3f& t,

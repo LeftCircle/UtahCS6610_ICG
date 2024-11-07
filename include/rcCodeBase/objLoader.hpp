@@ -36,7 +36,7 @@ class ObjLoader
 	// [comment]
 private:
 	bool _reading_f = false;
-	double _x, _y, _z;
+	double _x = 0, _y = 0, _z = 0;
 	std::vector<std::string> _v_n_t_faces = { "", "", "", "" };
 
 public:

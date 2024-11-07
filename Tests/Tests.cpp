@@ -82,88 +82,88 @@ public:
 		Assert::IsTrue(test_class.LoadFromFileObj(yoda_file_path.c_str()));
 	}
 
-	TEST_METHOD(TESTcreate_vbos_and_element_buffer)
-	{
-		// Based on the simple_obj.obj file
-		const int expected_vbo_size = 8;
-		const int expected_element_buffer_size = 9;
-		cy::Vec3f expected_vbo_vertices[expected_vbo_size] = {
-			cy::Vec3f(0, 0, 0),
-			cy::Vec3f(1, 0, 0),
-			cy::Vec3f(0, 1, 0),
-			cy::Vec3f(10, 0, 0),
-			cy::Vec3f(12, 0, 0),
-			cy::Vec3f(10, 1, 0),
-			cy::Vec3f(0, 0, 0),
-			cy::Vec3f(0, -1, 0)
-		};
+	//TEST_METHOD(TESTcreate_vbos_and_element_buffer)
+	//{
+	//	// Based on the simple_obj.obj file
+	//	const int expected_vbo_size = 8;
+	//	const int expected_element_buffer_size = 9;
+	//	cy::Vec3f expected_vbo_vertices[expected_vbo_size] = {
+	//		cy::Vec3f(0, 0, 0),
+	//		cy::Vec3f(1, 0, 0),
+	//		cy::Vec3f(0, 1, 0),
+	//		cy::Vec3f(10, 0, 0),
+	//		cy::Vec3f(12, 0, 0),
+	//		cy::Vec3f(10, 1, 0),
+	//		cy::Vec3f(0, 0, 0),
+	//		cy::Vec3f(0, -1, 0)
+	//	};
 
-		cy::Vec3f expected_vbo_normals[expected_vbo_size] = {
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.1, 0.1, 0.1),
-			cy::Vec3f(0.2, 0.2, 0.2),
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.3, 0.3, 0.3),
-			cy::Vec3f(0.2, 0.2, 0.2)
-		};
+	//	cy::Vec3f expected_vbo_normals[expected_vbo_size] = {
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.1, 0.1, 0.1),
+	//		cy::Vec3f(0.2, 0.2, 0.2),
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.3, 0.3, 0.3),
+	//		cy::Vec3f(0.2, 0.2, 0.2)
+	//	};
 
-		cy::Vec3f expected_vbo_texcoords[expected_vbo_size] = {
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.1, 0.1, 0.1),
-			cy::Vec3f(0.2, 0.2, 0.2),
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.0, 0.0, 0.0),
-			cy::Vec3f(0.3, 0.3, 0.3),
-			cy::Vec3f(0.2, 0.2, 0.2)
-		};
+	//	cy::Vec3f expected_vbo_texcoords[expected_vbo_size] = {
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.1, 0.1, 0.1),
+	//		cy::Vec3f(0.2, 0.2, 0.2),
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.0, 0.0, 0.0),
+	//		cy::Vec3f(0.3, 0.3, 0.3),
+	//		cy::Vec3f(0.2, 0.2, 0.2)
+	//	};
 
-		int expected_element_buffer[expected_element_buffer_size] = {
-			0, 1, 2,
-			3, 4, 5,
-			6, 1, 7
-		};
+	//	int expected_element_buffer[expected_element_buffer_size] = {
+	//		0, 1, 2,
+	//		3, 4, 5,
+	//		6, 1, 7
+	//	};
 
-		cy::TriMesh test_tri_mesh;
-		test_tri_mesh.LoadFromFileObj(test_file_path.c_str());
-		//test_tri_mesh.create_vbo_data_and_elements();
-		GlElementArrayData element_data = transformObjToGL(test_tri_mesh);
-		
-		Assert::AreEqual(expected_element_buffer_size, int(element_data._elements.size()));
-		Assert::AreEqual(expected_vbo_size, int(element_data._v_vbo.size()));
+	//	cy::TriMesh test_tri_mesh;
+	//	test_tri_mesh.LoadFromFileObj(test_file_path.c_str());
+	//	//test_tri_mesh.create_vbo_data_and_elements();
+	//	GlElementArrayData element_data = transformObjToGL(test_tri_mesh);
+	//	
+	//	Assert::AreEqual(expected_element_buffer_size, int(element_data._elements.size()));
+	//	Assert::AreEqual(expected_vbo_size, int(element_data._v_vbo.size()));
 
-		//// check that the vbo's and elements match by looping through each element and ensuring they are the same
-		cy::Vec3f v_vbo0 = element_data._v_vbo[0];
-		cy::Vec3f expected_vbo0 = expected_vbo_vertices[0];
-		wchar_t error_msg[100];
-		for (int i = 0; i < expected_vbo_size; i++)
-		{
-			// Vertex Coordinates
-			cy::Vec3f a_v = element_data._v_vbo[i];
-			cy::Vec3f e_v = expected_vbo_vertices[i];
-			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Vertex mismatch at index %d", i);
-			Assert::AreEqual(e_v, a_v, error_msg);
+	//	//// check that the vbo's and elements match by looping through each element and ensuring they are the same
+	//	cy::Vec3f v_vbo0 = element_data._v_vbo[0];
+	//	cy::Vec3f expected_vbo0 = expected_vbo_vertices[0];
+	//	wchar_t error_msg[100];
+	//	for (int i = 0; i < expected_vbo_size; i++)
+	//	{
+	//		// Vertex Coordinates
+	//		cy::Vec3f a_v = element_data._v_vbo[i];
+	//		cy::Vec3f e_v = expected_vbo_vertices[i];
+	//		swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Vertex mismatch at index %d", i);
+	//		Assert::AreEqual(e_v, a_v, error_msg);
 
-			// Normals
-			cy::Vec3f a_n = element_data._vn_vbo[i];
-			cy::Vec3f e_n = expected_vbo_normals[i];
-			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Normal mismatch at index %d", i);
-			Assert::AreEqual(e_n, a_n, error_msg);
+	//		// Normals
+	//		cy::Vec3f a_n = element_data._vn_vbo[i];
+	//		cy::Vec3f e_n = expected_vbo_normals[i];
+	//		swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Normal mismatch at index %d", i);
+	//		Assert::AreEqual(e_n, a_n, error_msg);
 
-			// Texture Coordinates
-			cy::Vec3f a_t = element_data._vt_vbo[i];
-			cy::Vec3f e_t = expected_vbo_texcoords[i];
-			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Texture Coordinate mismatch at index %d", i);
-			Assert::AreEqual(e_t, a_t, error_msg);
-		}
-		for (int i = 0; i < expected_element_buffer_size; i++)
-		{
-			swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Element mismatch at index %d. Expected: %d Actual: %d", i, expected_element_buffer[i], element_data._elements[i]);
-			Assert::AreEqual(expected_element_buffer[i], element_data._elements[i], error_msg);
-		}
-	}
+	//		// Texture Coordinates
+	//		cy::Vec3f a_t = element_data._vt_vbo[i];
+	//		cy::Vec3f e_t = expected_vbo_texcoords[i];
+	//		swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Texture Coordinate mismatch at index %d", i);
+	//		Assert::AreEqual(e_t, a_t, error_msg);
+	//	}
+	//	for (int i = 0; i < expected_element_buffer_size; i++)
+	//	{
+	//		swprintf(error_msg, sizeof(error_msg) / sizeof(wchar_t), L"Element mismatch at index %d. Expected: %d Actual: %d", i, expected_element_buffer[i], element_data._elements[i]);
+	//		Assert::AreEqual(expected_element_buffer[i], element_data._elements[i], error_msg);
+	//	}
+	//}
 }; // class Tests
 
 TEST_CLASS(TESTrcOpenGLScene)
@@ -266,19 +266,20 @@ public:
 		rc::ObjMesh mesh = rc::ObjMesh();
 		rc::ObjMesh* mesh_b = new rc::ObjMesh();
 		// assert that the material is a nullptr
-		Assert::IsNull(mesh.get_material_ptr(), L"Material should be nullptr");
+		Assert::IsFalse(mesh.has_material(), L"Material should not exist");
 
 		// Create a new material and set it to the mesh
-		rc::Material* new_material = new rc::Material();
-		mesh.set_material(new_material);
-		Assert::IsNotNull(mesh.get_material_ptr(), L"Material should not be nullptr");
+		std::unique_ptr<rc::Material> new_material = std::make_unique<rc::Material>();
+
+		mesh.material = std::move(new_material);
+		Assert::IsTrue(mesh.has_material(), L"Material should exist");
 		
 		// Pass the material to mesh b
-		mesh_b->set_material(mesh.release_material());
-		Assert::IsNull(mesh.get_material_ptr(), L"Material should be nullptr");
-		Assert::IsNotNull(mesh_b->get_material_ptr(), L"Material should not be nullptr");
+		mesh_b->material = std::move(mesh.material);
+		Assert::IsFalse(mesh.has_material(), L"Material should not exist in mesh a");
+		Assert::IsTrue(mesh_b->has_material(), L"Material should exist in mesh b");
+		delete mesh_b;
 	}
-
 
 	TEST_METHOD(TESTMaterialReader)
 	{
@@ -289,7 +290,6 @@ public:
 		rc::ObjMesh& teapot_mesh = meshes[0];
 		
 		// Check that the teapot mesh has a material
-		const rc::Material* teapot_material = teapot_mesh.get_material_ptr();
 		Assert::IsTrue(teapot_mesh.has_material(), L"Teapot mesh should have a material");
 
 

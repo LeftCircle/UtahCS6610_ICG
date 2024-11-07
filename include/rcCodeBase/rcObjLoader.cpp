@@ -101,11 +101,14 @@ void ObjLoader::_add_faces_to_mesh(rc::ObjMesh& mesh,
 }
 
 void ObjLoader::_build_obj_meshes(std::ifstream& file) {
-	rc::ObjMesh mesh;
+	// add a mesh to _meshes
+	ObjMesh new_mesh = ObjMesh();
+	_meshes.push_back(new_mesh);
+	
 	std::string line;
 	std::vector<std::string> v_n_t_faces = { "", "", "", "" };
 	while (std::getline(file, line)) {
-		_process_line(line, mesh);
+		_process_line(line, _meshes.back());
 	}
 	// Remove the last mesh from meshes if it has no data
 	if (_meshes.back().vertices.size() == 0) {
@@ -131,17 +134,17 @@ void ObjLoader::_process_line(const std::string& line, rc::ObjMesh& mesh) {
 	}
 	else if (id == "mtllib") {
 		// load the material file
-		mesh.set_material(load_material_file(line));
+		mesh.material = std::move(load_material_file(line));
 	}
-
-	mesh = _check_for_new_mesh(id, mesh);
 }
 
 rc::ObjMesh& ObjLoader::_check_for_new_mesh(const std::string& id,
 										    rc::ObjMesh& mesh) {
 	if (_reading_f and id != "f") {
 		_meshes.push_back(mesh);
-		_meshes.emplace_back(ObjMesh());
+		ObjMesh new_mesh = ObjMesh();
+		_meshes.push_back(new_mesh);
+		//_meshes.emplace_back(ObjMesh());
 		_reading_f = false;
 		return _meshes.back();
 	} else{

@@ -172,7 +172,7 @@ public:
 		memcpy(elements, _elements.data(), sizeof(int) * _elements.size());
 	}
 
-	void obj_to_gl_elements() {
+	/*void obj_to_gl_elements() {
 		auto data = transformObjToGL(*this);
 		
 		SetNumElements((unsigned int)data._elements.size());
@@ -182,7 +182,7 @@ public:
 		memcpy(vn_vbo, data._vn_vbo.data(), sizeof(cy::Vec3f) * data._vn_vbo.size());
 		memcpy(vt_vbo, data._vt_vbo.data(), sizeof(cy::Vec3f) * data._vt_vbo.size());
 		memcpy(elements, data._elements.data(), sizeof(int) * data._elements.size());
-	}
+	}*/
 
 	void SetNumElements(unsigned int n) { Allocate(n, elements, n_elements); };
 	// Checks to see if we need to allocate data by checking vbo first. If the size is different then also allocate for vn and vt
