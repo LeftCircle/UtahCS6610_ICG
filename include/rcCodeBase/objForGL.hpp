@@ -44,29 +44,20 @@ namespace std {
 
 namespace rc {
 
-	class MaterialHolder
-	{
-	protected:
-		Material* _material;
-
-	public:
-		MaterialHolder() { _material = nullptr; };
-		~MaterialHolder() { if (_material) delete _material; };
-
-		void set_material(Material* material);
-
-		Material* release_material();
-
-		const Material& get_material() const { return *_material; };
-		const Material* get_material_ptr() const { return _material; };
-	};
-
 	// This holds the data in the obj file to be converted into a glMesh. 
 	class ObjMesh : public MaterialHolder
 	{
 	public:
 		ObjMesh() : MaterialHolder() { group_name = ""; };
 		~ObjMesh() = default;
+		ObjMesh(ObjMesh&&) noexcept = default;
+		ObjMesh& operator=(ObjMesh&&) noexcept;
+		void swap(ObjMesh& other);
+
+		// Delete operations?
+		ObjMesh(const ObjMesh&) = delete;
+		ObjMesh& operator=(const ObjMesh&) = delete;
+
 
 		std::string group_name;
 		std::vector<Vector3f> vertices;

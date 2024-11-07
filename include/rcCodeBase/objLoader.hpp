@@ -34,6 +34,11 @@ class ObjLoader
 	// o [object_name]
 	// g [group_name]
 	// [comment]
+private:
+	bool _reading_f = false;
+	double _x, _y, _z;
+	std::vector<std::string> _v_n_t_faces = { "", "", "", "" };
+
 public:
 	ObjLoader() {};
 	~ObjLoader() {}; // Remove this line
@@ -47,6 +52,12 @@ public:
 
 private:
 	std::vector<rc::ObjMesh> _meshes;
+
+	void _process_line(const std::string& line, rc::ObjMesh& mesh);
+
+	void _process_v_t_n(const std::string& id, rc::ObjMesh& mesh);
+
+	rc::ObjMesh& _check_for_new_mesh(const std::string& id, rc::ObjMesh& mesh);
 
 	void _write_three_token_face_to_mesh(rc::ObjMesh& mesh,
 									const std::vector<std::string>& tokens,
@@ -75,6 +86,8 @@ private:
 											 const std::string& s1,
 											 const std::string& s2,
 											 const std::string& s3);
+	
+	bool _is_mtllib_line(const std::string& line);
 
 };
 

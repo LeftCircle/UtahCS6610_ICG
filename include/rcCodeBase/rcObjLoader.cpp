@@ -2,6 +2,21 @@
 
 using namespace rc;
 
+bool ObjLoader::loadObjFile(const std::string& path) {
+	if (!is_obj_file(path)) {
+		return false;
+	}
+	// add the current path to the file name
+
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		std::cerr << "Failed to open file: " << path << std::endl;
+		return false;
+	}
+	_build_obj_meshes(file);
+	return true;
+}
+
 bool is_obj_file(const std::string& path) {
 	return path.substr(path.size() - 4, 4) == ".obj";
 }
@@ -16,21 +31,6 @@ size_t split_string(const std::string& line,
 		tokens.push_back(token);
 	}
 	return tokens.size();
-}
-
-bool ObjLoader::loadObjFile(const std::string& path) {
-	if (!is_obj_file(path)) {
-		return false;
-	}
-	// add the current path to the file name
-
-	std::ifstream file(path);
-	if (!file.is_open()) {
-		std::cerr << "Failed to open file: " << path << std::endl;
-		return false;
-	}
-	_build_obj_meshes(file);
-	return true;
 }
 
 void ObjLoader::add_face_indexes(rc::ObjMesh& mesh, const std::string& line) {
@@ -102,46 +102,62 @@ void ObjLoader::_add_faces_to_mesh(rc::ObjMesh& mesh,
 
 void ObjLoader::_build_obj_meshes(std::ifstream& file) {
 	rc::ObjMesh mesh;
-	bool reading_f = false;
 	std::string line;
-	double x, y, z;
 	std::vector<std::string> v_n_t_faces = { "", "", "", "" };
 	while (std::getline(file, line)) {
-		if (line.size() < 2 or line[0] == '#') {
-			continue;
-		}
-
-		std::istringstream iss(line);
-		std::string id;
-		iss >> id;
-		if (id != "f") {
-			iss >> x >> y >> z;
-		}
-
-		if (reading_f and id != "f") {
-			// create a new mesh and continue
-			_meshes.push_back(mesh);
-			mesh = rc::ObjMesh();
-			reading_f = false;
-		}
-
-		if (id == "f") {
-			reading_f = true;
-			add_face_indexes(mesh, line);
-		}
-		else if (id == "v") {
-			mesh.vertices.push_back(Vector3f(x, y, z));
-		}
-		else if (id == "vt") {
-			mesh.tex_coords.push_back(Vector3f(x, y, z));
-		}
-		else if (id == "vn") {
-			mesh.normals.push_back(Vector3f(x, y, z));
-		}
+		_process_line(line, mesh);
 	}
-	// add the last mesh if it has any data
-	if (mesh.vertices.size() > 0) {
+	// Remove the last mesh from meshes if it has no data
+	if (_meshes.back().vertices.size() == 0) {
+		_meshes.pop_back();
+	}
+}
+
+void ObjLoader::_process_line(const std::string& line, rc::ObjMesh& mesh) {
+	if (line.size() < 2 or line[0] == '#') {
+		return;
+	}
+
+	std::istringstream iss(line);
+	std::string id;
+	iss >> id;
+	if (id == "v" or id == "vt" or id == "vn") {
+		iss >> _x >> _y >> _z;
+		_process_v_t_n(id, mesh);
+	}
+	else if (id == "f") {
+		_reading_f = true;
+		add_face_indexes(mesh, line);
+	}
+	else if (id == "mtllib") {
+		// load the material file
+		mesh.set_material(load_material_file(line));
+	}
+
+	mesh = _check_for_new_mesh(id, mesh);
+}
+
+rc::ObjMesh& ObjLoader::_check_for_new_mesh(const std::string& id,
+										    rc::ObjMesh& mesh) {
+	if (_reading_f and id != "f") {
 		_meshes.push_back(mesh);
+		_meshes.emplace_back(ObjMesh());
+		_reading_f = false;
+		return _meshes.back();
+	} else{
+		return mesh;
+	}
+}
+
+void ObjLoader::_process_v_t_n(const std::string& id, rc::ObjMesh& mesh) {
+	if (id == "v") {
+		mesh.vertices.push_back(Vector3f(_x, _y, _z));
+	}
+	else if (id == "vt") {
+		mesh.tex_coords.push_back(Vector3f(_x, _y, _z));
+	}
+	else if (id == "vn") {
+		mesh.normals.push_back(Vector3f(_x, _y, _z));
 	}
 }
 
@@ -201,4 +217,8 @@ void ObjLoader::_add_faces_to_mesh_with_vtn_strings(rc::ObjMesh& mesh,
 		mesh.vertex_faces.push_back(v_face);
 		mesh.tex_coord_faces.push_back(vt_face);
 		mesh.normal_faces.push_back(vn_face);
+}
+
+bool _is_mtllib_line(const std::string& line) {
+	return line.substr(0, 6) == "mtllib";
 }

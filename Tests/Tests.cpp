@@ -287,11 +287,10 @@ public:
 		std::vector<rc::ObjMesh> meshes = obj_loader.getObjMeshes();
 		Assert::AreEqual(1, int(meshes.size()), L"Teapot obj file should have 1 mesh");
 		rc::ObjMesh& teapot_mesh = meshes[0];
-		/*unsigned int n_materials = teapot_mesh.NM();
-		Assert::AreEqual(1, int(n_materials), L"Teapot obj file should have 1 material");
-		rc::Material& teapot_material = teapot_mesh.get_material(0);
-		std::string expected_material_name = "default";
-		Assert::AreEqual(expected_material_name, teapot_material.name, L"Material name should be 'default'");*/
+		
+		// Check that the teapot mesh has a material
+		const rc::Material* teapot_material = teapot_mesh.get_material_ptr();
+		Assert::IsTrue(teapot_mesh.has_material(), L"Teapot mesh should have a material");
 
 
 	}
