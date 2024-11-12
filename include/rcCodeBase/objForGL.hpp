@@ -49,16 +49,8 @@ namespace rc {
 	{
 	public:
 		ObjMesh() : MaterialHolder() { group_name = ""; };
-		~ObjMesh() = default;
-		ObjMesh(ObjMesh&&) noexcept = default;
-		ObjMesh& operator=(ObjMesh&&) noexcept;
-		void swap(ObjMesh& other);
-
-		// // Delete operations?
-		// ObjMesh(const ObjMesh&) = delete;
-		// ObjMesh& operator=(const ObjMesh&) = delete;
-
-
+		~ObjMesh() {};
+		
 		std::string group_name;
 		std::vector<Vector3f> vertices;
 		std::vector<Vector3f> normals;

@@ -2,7 +2,6 @@
 #define RC_MATERIAL_HPP
 
 #include <string>
-#include <memory>
 
 namespace rc{
 
@@ -16,7 +15,7 @@ public:
 		ks[0] = ka[1] = ka[2] = 0.0f;
 		ns = 0;
 	};
-	~Material() = default;
+	~Material() {};
 
 	std::string name;
 	float ka[3]; // ambient
@@ -29,16 +28,19 @@ public:
 	std::string map_ka; // ambient texture map
 };
 
-std::unique_ptr<Material> load_material_file(const std::string& path);
+//Material& load_material_file(const std::string& path);
 
 class MaterialHolder{
 protected:
+	Material* material;
 
 public:
-	std::unique_ptr<Material> material;
 	
-	MaterialHolder() = default;
-	~MaterialHolder() = default;
+	MaterialHolder() {material = nullptr;};
+	~MaterialHolder() {if (material != nullptr) delete material;};
+
+	void set_material(Material* mat);
+	Material* release_material();
 
 	bool has_material() const;
 };

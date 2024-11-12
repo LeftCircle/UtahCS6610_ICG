@@ -269,13 +269,13 @@ public:
 		Assert::IsFalse(mesh.has_material(), L"Material should not exist");
 
 		// Create a new material and set it to the mesh
-		std::unique_ptr<rc::Material> new_material = std::make_unique<rc::Material>();
+		rc::Material* new_material = new rc::Material();
 
-		mesh.material = std::move(new_material);
+		mesh.set_material(new_material);
 		Assert::IsTrue(mesh.has_material(), L"Material should exist");
 		
 		// Pass the material to mesh b
-		mesh_b->material = std::move(mesh.material);
+		mesh_b->set_material(mesh.release_material());
 		Assert::IsFalse(mesh.has_material(), L"Material should not exist in mesh a");
 		Assert::IsTrue(mesh_b->has_material(), L"Material should exist in mesh b");
 		delete mesh_b;

@@ -134,7 +134,7 @@ void ObjLoader::_process_line(const std::string& line, rc::ObjMesh& mesh) {
 	}
 	else if (id == "mtllib") {
 		// load the material file
-		mesh.material = std::move(load_material_file(line));
+		//mesh.material = load_material_file(line);
 	}
 }
 
