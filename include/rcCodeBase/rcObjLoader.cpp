@@ -6,7 +6,6 @@ bool ObjLoader::loadObjFile(const std::string& path) {
 	if (!is_obj_file(path)) {
 		return false;
 	}
-	// add the current path to the file name
 
 	std::ifstream file(path);
 	if (!file.is_open()) {
@@ -134,7 +133,7 @@ void ObjLoader::_process_line(const std::string& line, rc::ObjMesh& mesh) {
 	}
 	else if (id == "mtllib") {
 		// load the material file
-		//mesh.material = load_material_file(line);
+		mesh.set_material(_load_material_file(line));
 	}
 }
 
@@ -222,6 +221,11 @@ void ObjLoader::_add_faces_to_mesh_with_vtn_strings(rc::ObjMesh& mesh,
 		mesh.normal_faces.push_back(vn_face);
 }
 
-bool _is_mtllib_line(const std::string& line) {
+bool ObjLoader::_is_mtllib_line(const std::string& line) {
 	return line.substr(0, 6) == "mtllib";
+}
+
+rc::Material* ObjLoader::_load_material_file(const std::string& line)
+{
+	return new rc::Material();
 }

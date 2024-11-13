@@ -2,6 +2,12 @@
 
 using namespace rc;
 
+// Copy Constructor
+MaterialHolder::MaterialHolder(const MaterialHolder& other){
+	if (other.has_material()) {
+		material = new Material(*other.material);
+	}
+}
 
 bool MaterialHolder::has_material() const {
 	return material != nullptr;
@@ -17,3 +23,9 @@ Material* MaterialHolder::release_material(){
 	material = nullptr;
 	return mat;
 }
+
+MaterialHolder::~MaterialHolder(){
+	if (material != nullptr) delete material;
+	material = nullptr;
+}
+

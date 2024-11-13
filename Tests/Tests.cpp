@@ -244,12 +244,12 @@ public:
 TEST_CLASS(TestMultipleMaterialsAndObjectGroups)
 {
 private:
-	const char* yoda_obj_path = "..\\projects\\hw02_utah_teapot\\yoda\\yoda.obj";
+	std::string yoda_obj_path = cur_folder + "..\\projects\\hw02_utah_teapot\\yoda\\yoda.obj";
 public:
 	TEST_METHOD(TESTMaterialForDifferentGroups)
 	{
 		rc::rcTriMeshForGL yoda_mesh;
-		bool error = yoda_mesh.LoadFromFileObj(yoda_obj_path);
+		bool error = yoda_mesh.LoadFromFileObj(yoda_obj_path.c_str());
 		unsigned int expected_n_materials = 7;
 		Assert::AreEqual(expected_n_materials, yoda_mesh.NM(), L"Yoda mesh should have 7 materials");
 
@@ -259,7 +259,7 @@ public:
 TEST_CLASS(TESTCustomMaterialReader)
 {
 private:
-	const char* teapot_path = "..\\projects\\hw02_utah_teapot\\teapot.obj";
+	std::string teapot_path = cur_folder + "..\\projects\\hw02_utah_teapot\\teapot.obj";
 public:
 	TEST_METHOD(TESTMaterialHolderSubclasses)
 	{
@@ -284,6 +284,7 @@ public:
 	TEST_METHOD(TESTMaterialReader)
 	{
 		ObjLoader obj_loader;
+		std::cout << "Loading teapot obj file" << teapot_path << std::endl;
 		Assert::IsTrue(obj_loader.loadObjFile(teapot_path), L"Teapot obj file should load");
 		std::vector<rc::ObjMesh> meshes = obj_loader.getObjMeshes();
 		Assert::AreEqual(1, int(meshes.size()), L"Teapot obj file should have 1 mesh");
@@ -292,6 +293,8 @@ public:
 		// Check that the teapot mesh has a material
 		Assert::IsTrue(teapot_mesh.has_material(), L"Teapot mesh should have a material");
 
+		// Free the material
+		//delete &teapot_mesh;
 
 	}
 };

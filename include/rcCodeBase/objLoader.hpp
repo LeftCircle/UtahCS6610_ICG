@@ -8,6 +8,7 @@
 
 #include "objForGL.hpp"
 #include "rcVector.hpp"
+#include "rcMaterial.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -41,7 +42,7 @@ private:
 
 public:
 	ObjLoader() {};
-	~ObjLoader() {}; // Remove this line
+	~ObjLoader() {};
 
 	bool loadObjFile(const std::string& path);
 
@@ -88,6 +89,8 @@ private:
 											 const std::string& s3);
 	
 	bool _is_mtllib_line(const std::string& line);
+
+	rc::Material* _load_material_file(const std::string& line);
 
 };
 
