@@ -12,9 +12,6 @@ struct GlElementArrayData {
 };
 
 struct FaceData {
-    // const unsigned int vert[3];
-    //const unsigned int normal[3];
-    //const unsigned int texture[3];
     const cy::Vec3f &vert;
     const unsigned int *normal;
     const unsigned int *texture;

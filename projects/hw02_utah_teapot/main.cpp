@@ -1,18 +1,43 @@
+/*
+This is an OpenGL program that loads a teapot object and displays it on the screen.
+This program demonstrates:
+  - Converting an obj file to a format that can be used with OpenGL
+  - Processing vertex, normal, and texture data to be used in an element buffer
+  - Blinn Phong shading with ambient, diffuse, and specular lighting
+  - A camera that can be rotated around the object
+  - A light that can be rotated around the object
+
+Keyboard functionality:
+  - a: Toggle ambient lighting
+  - s: Toggle specular lighting
+  - d: Toggle diffuse lighting
+  - F6: Recompile shaders
+  - ESC: Close the window
+  - Arrow keys: Rotate the light
+
+Mouse functionality:
+  - Left click and drag: Rotate the camera
+  - Scroll wheel: Zoom in and out
+
+Usage:
+  This project was created with Visual Studio.
+  lodepng.cpp is required to load textures.
+*/
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include <iostream>
+
 #include "cyCodeBase/cyMatrix.h"
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyGL.h"
-#include "cyCodeBase/cyTriMesh.h"
+
 #include "rcCodeBase/rcCamera.hpp"
 #include "rcCodeBase/rcOpenGLScene.hpp"
 #include "rcCodeBase/rcCore.hpp"
 #include "rcCodeBase/rcObjModifier.h"
 #include "rcCodeBase/rcLights.hpp"
 #include "rcCodeBase/rcTexture.h"
-#include <iostream>
 
+#include <iostream>
 
 using namespace rc;
 
@@ -24,7 +49,6 @@ const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.pn
 
 GLScene scene;
 rc::SphericalDirectionalLight light;
-bool use_elements = true;
 
 // Create a bitflag for different lighting types
 enum ShadingType
@@ -165,22 +189,12 @@ void fn_keyboard(int key, int x, int y)
 	}
 }
 
-void _draw_arrays_or_elements()
-{
-	if (use_elements)
-	{
-		glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
-	}
-	else
-	{
-		glDrawArrays(GL_TRIANGLES, 0, scene.n_points * 6);
-	}
-}
-
+// Renders the scene by using glDrawElements to reduce the amount of data that has
+// to be sent to the GPU
 void render(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	_draw_arrays_or_elements();
+	glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
 	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
@@ -257,12 +271,10 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
 
-	if (use_elements)
-	{
-		glGenBuffers(1, &ebuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
-	}
+	glGenBuffers(1, &ebuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
+	
 	// Load the shaders with cy calls
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
 	scene.program.Bind();
@@ -363,14 +375,10 @@ int main(int argc, char** argv)
 		std::cerr << "Error loading file: " << filename << std::endl;
 		return 1;
 	}
-	if (use_elements)
-	{
-		mesh.obj_to_gl_elements();
-	}
-	else
-	{
-		mesh.create_vbo_data_for_draw_arrays();
-	}
+	
+	// Convert the obj file to a format that can be used with OpenGL
+	mesh.obj_to_gl_elements();
+	
 	init_window(argc, argv);
 	init_points_from_mesh(mesh);
 	init_camera();
