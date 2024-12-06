@@ -16,7 +16,6 @@
 
 using namespace rc;
 
-//const char* default_obj_path = "yoda\\yoda.obj";
 const char* default_obj_path = "teapot.obj";
 const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
@@ -26,7 +25,6 @@ const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.pn
 GLScene scene;
 rc::SphericalDirectionalLight light;
 bool use_elements = true;
-bool ctrl_held = false;
 
 // Create a bitflag for different lighting types
 enum ShadingType
@@ -39,7 +37,6 @@ unsigned int shading_flag = ShadingType::AMBIENT | ShadingType::DIFFUSE | Shadin
 
 
 // OpenGL function that adjusts theta and phi based on mouse movement when the left mouse button is pressed
-
 void rotate_light(int dx, int dy)
 {
 	light.add_rotation_and_get_direction(-dx, -dy);
@@ -50,8 +47,7 @@ void mouse_motion(int x, int y)
 {
 	int button = glutGetModifiers();
 	// set the rotation of the object only if the left button is down and ctrl is not pressed
-	bool can_rotate_obj = (button == GLUT_LEFT_BUTTON) && !ctrl_held; 
-	bool can_rotate_light = (button == GLUT_LEFT_BUTTON) && ctrl_held;
+	bool can_rotate_obj = (button == GLUT_LEFT_BUTTON);
 	
 	if (can_rotate_obj)
 	{
@@ -60,27 +56,12 @@ void mouse_motion(int x, int y)
 	
 		scene.camera.rotate_about_og_up(-dx, -dy);
 	}
-	if (can_rotate_light)
-	{
-		int dx = x - scene.mouse_position.x;
-		int dy = y - scene.mouse_position.y;
-		rotate_light(dx, dy);
-	}
 	scene.mouse_position.Set(x, y);
 	glutPostRedisplay();
 }
 
 void mouse_buttons(int button, int state, int x, int y)
 {
-	int modifiers = glutGetModifiers();
-	bool was_ctrl_held = ctrl_held;
-	ctrl_held = modifiers == GLUT_ACTIVE_CTRL;
-	if (was_ctrl_held != ctrl_held)
-	{
-		if (ctrl_held) { light.start_rotating(); }
-		else { light.stop_rotating();  }
-	}
-	
 	// store the mouse position when the left button is pressed
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
@@ -155,6 +136,9 @@ void keyboard(unsigned char key, int x, int y)
 	}
 }
 
+
+// Provides the ability to rotate the light with the arrow keys
+// and recompile the shaders with F6
 void fn_keyboard(int key, int x, int y)
 {
 	if (key == GLUT_KEY_F6)
@@ -201,11 +185,6 @@ void render(void)
 	glutSwapBuffers();
 }
 
-void idle(void)
-{
-
-}
-
 bool _are_command_arguments_valid_or_debug(int argc, char** argv)
 {
 	if (argc != 2)
@@ -249,7 +228,6 @@ void bind_glut_functions()
 {
 	// Display
 	glutDisplayFunc(render);
-	glutIdleFunc(idle);
 	// Keyboard
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(fn_keyboard);
@@ -299,19 +277,6 @@ void _bind_texture(rc::rcTriMeshForGL& mesh)
 	// Load the texture
 	Texture texture(brick_png_path);
 
-	// Load the texture
-	/*GLuint texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mesh.get_texture_width(), mesh.get_texture_height(), 0, GL_RGB, GL_UNSIGNED_BYTE, mesh.get_texture_data());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	GLint sampler = glGetUniformLocation(scene.program.GetID(), "tex");
-	glUseProgram(scene.program.GetID());
-	glUniform1i(sampler, 0);
-	*/
-	
 	cyGLTexture2D tex;
 	tex.Initialize();
 	tex.SetImage(texture.data_const_ptr(), 4, texture.width(), texture.height());
@@ -334,21 +299,16 @@ void _bind_texture(rc::rcTriMeshForGL& mesh)
 	spec_tex.BuildMipmaps();
 	spec_tex.Bind(1);
 	scene.program["specular_map"] = 1;
-
 }
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 {
 	scene.set_mesh(&mesh);
-	//scene.n_points = mesh.NV();
 	scene.n_points = mesh.NF() * 3;
 	scene.n_elements = mesh.NE();
 
 	_bind_buffers(mesh);
 	_bind_texture(mesh);
-	
-	
-	//scene.program.SetAttribBuffer("texcoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
@@ -369,10 +329,10 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
 	
 	scene.program.SetUniform("light_direction", light.direction());
-	//scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
-	//scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
-	//scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
-	//scene.program.SetUniform("shininess", 200.0f);
+	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
+	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
+	scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
+	scene.program.SetUniform("shininess", 200.0f);
 }
 
 void init_camera()

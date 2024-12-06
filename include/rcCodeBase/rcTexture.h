@@ -7,7 +7,7 @@
 
 namespace rc{
 
-//Example 2
+//Example 2 -> From the lodepng documentation
 //Load PNG file from disk to memory first, then decode to raw pixels in memory.
 void decodeTwoSteps(const char* filename) {
   std::vector<unsigned char> png;
@@ -37,6 +37,7 @@ private:
             std::cerr << "Error loading texture: " << lodepng_error_text(error) << std::endl;
         }
     }
+    
     void decodeOneStep(const char* filename) {
         unsigned int error = lodepng::decode(_data, _width, _height, filename);
         if (error) {
