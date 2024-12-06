@@ -41,14 +41,14 @@ namespace rc {
 		MaterialHolder(const MaterialHolder& other);
 		~MaterialHolder();
 
-		// Copy Assignment Operator
-		MaterialHolder& operator=(const MaterialHolder& other);
+		//// Copy Assignment Operator
+		//MaterialHolder& operator=(const MaterialHolder& other);
 
-		// Move Constructor
-		MaterialHolder(MaterialHolder&& other) noexcept;
+		//// Move Constructor
+		//MaterialHolder(MaterialHolder&& other) noexcept;
 
-		// Move Assignment Operator
-		MaterialHolder& operator=(MaterialHolder&& other) noexcept;
+		//// Move Assignment Operator
+		//MaterialHolder& operator=(MaterialHolder&& other) noexcept;
 
 		void set_material(Material* mat);
 		Material* release_material();
