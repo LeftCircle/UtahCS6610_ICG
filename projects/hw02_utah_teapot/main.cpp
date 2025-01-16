@@ -22,6 +22,17 @@ Mouse functionality:
 Usage:
   This project was created with Visual Studio.
   lodepng.cpp is required to load textures.
+
+Notes: 
+	I created this project trying to follow the structure of cyCodeBase. 
+	All of the files in rcCodeBase are .h files, and I am not entirely 
+	pleased with this. 
+	After starting the projects and examples from Donald H. House's Physics
+	Based Animation course,	I got an example of what a clean C++ project 
+	looks like. If I were to redo this project, I would	more strictly adhere
+	to the single responsibility principle and separate the classes into .h
+	and .cpp files.	Having the files split more strictly into a Model-View-Controller
+	structure would have greatly benifited this project.
 */
 #include <GL/glew.h>
 #include <GL/freeglut.h>
