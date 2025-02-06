@@ -12,7 +12,7 @@ TEST(TestCaseName, TestName) {
 }
 
 TEST(TestcyTriMesh, TestLoadObjFile) {
-	cy::TriMesh test_mesh;
+	rc::rcTriMeshForGL test_mesh;
 	unsigned int expected_n_vertices = 0;
 	EXPECT_EQ(expected_n_vertices, test_mesh.NV());
 	bool loaded = test_mesh.LoadFromFileObj(yoda_path);
@@ -47,11 +47,13 @@ TEST(TestcyTriMesh, TestBreakUpBuffersByMaterial) {
 	int m0_first_face = test_mesh.GetMaterialFirstFace(0);
 
 	int n_m0_elements = m0_face_count * 3;
-	int mo_element_start = m0_first_face * 3;
+	int m0_element_start = m0_first_face * 3;
 
 	EXPECT_EQ(83160, n_m0_elements);
-	EXPECT_EQ(0, mo_element_start);
+	EXPECT_EQ(0, m0_element_start);
 
-	
+	//int m1_first_face = test_mesh.GetMaterialFirstFace(1);
+	//EXPECT_EQ(m1_first_face, test_mesh.GetMaterialIndex(m1_first_face));
+	//EXPECT_EQ(m1_first_face, m0_face_count);
 	
 }

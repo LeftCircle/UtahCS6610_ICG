@@ -324,6 +324,14 @@ void _bind_texture(rc::rcTriMeshForGL& mesh)
 	scene.program["specular_map"] = 1;
 }
 
+void _bind_buffers_and_textures_for_multiple_materials(rc::rcTriMeshForGL& mesh) {
+	// I think we want to do this for each material
+	int n_materials = mesh.NM();
+	for (int i = 0; i < n_materials; i++) {
+
+	}
+}
+
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 {
 	scene.set_mesh(&mesh);
