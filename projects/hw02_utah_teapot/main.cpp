@@ -49,10 +49,11 @@ Notes:
 #include "rcCodeBase/rcTexture.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace rc;
 
-const char* default_obj_path = "teapot.obj";
+const char* default_obj_path = "yoda/yoda.obj";
 const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";
@@ -261,6 +262,26 @@ void bind_glut_functions()
 	glutMotionFunc(mouse_motion);
 }
 
+void _bind_VNT_buffers(rc::rcTriMeshForGL& mesh, std::vector<GLuint> &v_n_t) {
+	GLuint v_vbo, vn_vbo, vt_vbo;
+
+	glGenBuffers(1, &v_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f)* mesh.get_vbo_size(), &mesh.V_vbo(0), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &vn_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f)* mesh.get_vbo_size(), &mesh.VN_vbo(0), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &vt_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f)* mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
+	
+	v_n_t.push_back(v_vbo);
+	v_n_t.push_back(vn_vbo);
+	v_n_t.push_back(vt_vbo);
+}
+
 void _bind_buffers(rc::rcTriMeshForGL& mesh)
 {
 	// Create vertex array object
@@ -268,19 +289,10 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	GLuint v_vbo, vn_vbo, vt_vbo, ebuffer;
+	std::vector<GLuint> v_n_t;
+	_bind_VNT_buffers(mesh, v_n_t);
 
-	glGenBuffers(1, &v_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.V_vbo(0), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &vn_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VN_vbo(0), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &vt_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cy::Vec3f) * mesh.get_vbo_size(), &mesh.VT_vbo(0), GL_STATIC_DRAW);
+	GLuint ebuffer;
 
 	glGenBuffers(1, &ebuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
@@ -290,9 +302,9 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	bool shader_comp_success = scene.program.BuildFiles("shader.vert", "shader.frag");
 	scene.program.Bind();
 
-	scene.program.SetAttribBuffer("position", v_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	scene.program.SetAttribBuffer("normal", vn_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	scene.program.SetAttribBuffer("textCoord", vt_vbo, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	scene.program.SetAttribBuffer("position", v_n_t[0], 3, GL_FLOAT, GL_FALSE, 0, 0);
+	scene.program.SetAttribBuffer("normal", v_n_t[1], 3, GL_FLOAT, GL_FALSE, 0, 0);
+	scene.program.SetAttribBuffer("textCoord", v_n_t[2], 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 void _bind_texture(rc::rcTriMeshForGL& mesh)
@@ -330,6 +342,30 @@ void _bind_buffers_and_textures_for_multiple_materials(rc::rcTriMeshForGL& mesh)
 	for (int i = 0; i < n_materials; i++) {
 
 	}
+}
+
+void _bind_buffers_for_multiple_materials(rc::rcTriMeshForGL& mesh, std::vector<GLuint>& ebos) {
+	// I think we want to do this for each texture
+	int n_textures = mesh.NM();
+	for (int i = 0; i < n_textures; i++) {
+		// We need to split up the element array buffer into multiple different
+		// We should try keeping the V/T/N buffers as they are, and just passing
+		// saving the different element buffers. 
+		GLuint ebuffer;
+		glGenBuffers(1, &ebuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
+		// Now get the number of indices for this material
+		int n_indices = mesh.GetMaterialFaceCount(i) * 3;
+		int start_index = mesh.GetMaterialFirstFace(i) * 3;
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * n_indices, &mesh.E(start_index), GL_STATIC_DRAW);
+		ebos.push_back(ebuffer);
+
+		// We still need the texture for this material so that we can bind the texture to the shader
+		// when it is time to draw these elements. 
+
+		// attributes still need to be set and the v_n_t buffers bound
+	}
+	// We should return a list of all of the element buffers so that we have them later. 
 }
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
