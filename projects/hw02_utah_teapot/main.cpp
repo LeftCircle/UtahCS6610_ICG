@@ -50,6 +50,7 @@ Notes:
 
 #include <iostream>
 #include <vector>
+#include <map>
 
 using namespace rc;
 
@@ -58,6 +59,8 @@ const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";
 const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.png";
+
+std::unordered_map<GLuint, GLuint> ebo_to_texture;
 
 GLScene scene;
 rc::SphericalDirectionalLight light;
@@ -336,36 +339,39 @@ void _bind_texture(rc::rcTriMeshForGL& mesh)
 	scene.program["specular_map"] = 1;
 }
 
-void _bind_buffers_and_textures_for_multiple_materials(rc::rcTriMeshForGL& mesh) {
-	// I think we want to do this for each material
-	int n_materials = mesh.NM();
-	for (int i = 0; i < n_materials; i++) {
-
-	}
+GLuint _initialize_gl_texture(const char* path) {
+	Texture new_texture(path);
+	cyGLTexture2D tex;
+	tex.Initialize();
+	tex.SetImage(new_texture.data_const_ptr(), 4, new_texture.width(), new_texture.height());
+	tex.BuildMipmaps();
+	// tex.Bind() -> No need to bind. This comes later with the draw
+	// No need to bind to the shader either. Comes with draw.
+	return tex.GetID();
 }
 
-void _bind_buffers_for_multiple_materials(rc::rcTriMeshForGL& mesh, std::vector<GLuint>& ebos) {
-	// I think we want to do this for each texture
+void _bind_ebo_and_tex_for_multiple_materials(rc::rcTriMeshForGL& mesh, std::vector<GLuint>& ebos) {
 	int n_textures = mesh.NM();
-	for (int i = 0; i < n_textures; i++) {
-		// We need to split up the element array buffer into multiple different
-		// We should try keeping the V/T/N buffers as they are, and just passing
-		// saving the different element buffers. 
+	for (int i = 0; i < n_textures; i++) { 
 		GLuint ebuffer;
 		glGenBuffers(1, &ebuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-		// Now get the number of indices for this material
+		
+		int first_face = mesh.GetMaterialFirstFace(i);
 		int n_indices = mesh.GetMaterialFaceCount(i) * 3;
-		int start_index = mesh.GetMaterialFirstFace(i) * 3;
+		int start_index = first_face * 3;
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * n_indices, &mesh.E(start_index), GL_STATIC_DRAW);
 		ebos.push_back(ebuffer);
 
 		// We still need the texture for this material so that we can bind the texture to the shader
 		// when it is time to draw these elements. 
+		int material = mesh.GetMaterialIndex(first_face);
 
-		// attributes still need to be set and the v_n_t buffers bound
-	}
-	// We should return a list of all of the element buffers so that we have them later. 
+		// now we have to build and bind the textures for this material, and add it to the map
+		const char* path = "";
+		GLuint tex_id = _initialize_gl_texture(path);
+		ebo_to_texture[ebuffer] = tex_id;
+	} 
 }
 
 void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
