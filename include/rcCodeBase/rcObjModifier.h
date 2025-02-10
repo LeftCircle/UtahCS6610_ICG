@@ -13,6 +13,9 @@ namespace rc
 
 	struct MaterialGroup {
 		int material_index;
+		int n_indices;
+		int start_index;
+		const void* indices; // might not be used
 		GLuint ebuffer_id;
 		GLuint map_Ka_id;
 		GLuint map_Kd_id;
@@ -20,7 +23,10 @@ namespace rc
 
 		// Constructor to set the defaults
 		MaterialGroup() {
+			start_index = 0;
 			material_index = -1;
+			n_indices = 0;
+			indices = nullptr;
 			ebuffer_id = -1;
 			map_Ka_id = -1;
 			map_Kd_id = -1;

@@ -41,6 +41,7 @@ Usage:
 #include <iostream>
 #include <vector>
 #include <map>
+#include <filesystem>
 
 using namespace rc;
 
@@ -49,6 +50,9 @@ const char* filename;
 const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";
 const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.png";
+const char* asset_path = "yoda\\";
+
+std::filesystem::path dir = std::filesystem::current_path();
 
 #define NULL_ID -1
 
@@ -228,16 +232,26 @@ void _set_material_textures(rc::MaterialGroup& material_group)
 	}
 }
 
+void _set_material_colors(const cy::TriMesh::Mtl& mtl)
+{
+	scene.program.SetUniform("Ka", cy::Vec3f(mtl.Ka));
+	scene.program.SetUniform("Kd", cy::Vec3f(mtl.Kd));
+	scene.program.SetUniform("Ks", cy::Vec3f(mtl.Ks));
+}
 
-void _render_material_group(rc::MaterialGroup& material_group)
+void _render_material_group(rc::MaterialGroup& material_group, rc::rcTriMeshForGL& mesh)
 {
 	_set_material_flags(material_group);
 	_set_material_textures(material_group);
+	const cy::TriMesh::Mtl& mtl = mesh.M(material_group.material_index);
+	_set_material_colors(mtl);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, material_group.ebuffer_id);
+	
+	// Apparently we should be setting the buffer data only once in the code. 
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * material_group.n_indices, material_group.indices, GL_STATIC_DRAW);
+	//glDrawElements(GL_TRIANGLES, material_group.n_indices, GL_UNSIGNED_INT, material_group.indices);
 
-	// TODO -> set standard ka/kd/ks 
-	// We need the material from the tri mesh for this.
-
-	glDrawElements(GL_TRIANGLES, material_group.ebuffer_id, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, material_group.n_indices, GL_UNSIGNED_INT, (void*)(material_group.start_index * sizeof(int)));
 }
 
 // Renders the scene by using glDrawElements to reduce the amount of data that has
@@ -245,7 +259,13 @@ void _render_material_group(rc::MaterialGroup& material_group)
 void render(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
+	rc::rcTriMeshForGL& mesh = *scene.get_mesh();
+	int n_material_groups = material_groups.size();
+	for (int i = 0; i < n_material_groups; i++)
+	{
+		_render_material_group(material_groups[i], mesh);
+	}
+	//glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
 	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
@@ -321,7 +341,7 @@ void _bind_VNT_buffers(rc::rcTriMeshForGL& mesh, std::vector<GLuint> &v_n_t) {
 	v_n_t.push_back(vt_vbo);
 }
 
-void _bind_buffers(rc::rcTriMeshForGL& mesh)
+GLuint _bind_buffers(rc::rcTriMeshForGL& mesh)
 {
 	// Create vertex array object
 	GLuint vao;
@@ -332,7 +352,6 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	_bind_VNT_buffers(mesh, v_n_t);
 
 	GLuint ebuffer;
-
 	glGenBuffers(1, &ebuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * mesh.get_n_elements(), &mesh.E(0), GL_STATIC_DRAW);
@@ -344,6 +363,8 @@ void _bind_buffers(rc::rcTriMeshForGL& mesh)
 	scene.program.SetAttribBuffer("position", v_n_t[0], 3, GL_FLOAT, GL_FALSE, 0, 0);
 	scene.program.SetAttribBuffer("normal", v_n_t[1], 3, GL_FLOAT, GL_FALSE, 0, 0);
 	scene.program.SetAttribBuffer("textCoord", v_n_t[2], 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+	return ebuffer;
 }
 
 void _bind_texture(rc::rcTriMeshForGL& mesh)
@@ -386,7 +407,7 @@ GLuint _cy_initialize_gl_texture(const char* path) {
 	return tex.GetID();
 }
 
-GLuint _init_gl_texture(const char* path) {
+GLuint _init_gl_texture(const std::string& path) {
 	Texture new_texture(path);
 	GLuint tex_id;
 	glGenTextures(1, &tex_id);
@@ -402,39 +423,39 @@ GLuint _init_gl_texture(const char* path) {
 	return tex_id;
 }
 
-void _bind_ebo_and_tex_for_multiple_materials(rc::rcTriMeshForGL& mesh) {
+void _init_material_groups_for_ebo(rc::rcTriMeshForGL& mesh, GLuint ebuffer) {
 	int n_materials = mesh.NM();
 	for (int i = 0; i < n_materials; i++) {
 		rc::MaterialGroup mg;
-		mg.material_index = i;
-
-		// Initialize the element array buffer for this material
-		GLuint ebuffer;
-		glGenBuffers(1, &ebuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
-		
-		int first_face = mesh.GetMaterialFirstFace(i);
-		int n_indices = mesh.GetMaterialFaceCount(i) * 3;
-		int start_index = first_face * 3;
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * n_indices, &mesh.E(start_index), GL_STATIC_DRAW);
 		mg.ebuffer_id = ebuffer;
-
+		mg.material_index = i;
+		
+		// Set the data for the indices
+		int n_indices = mesh.GetMaterialFaceCount(i) * 3;
+		mg.n_indices = n_indices;
+		int first_face = mesh.GetMaterialFirstFace(i);
+		int start_index = first_face * 3;
+		mg.start_index = start_index;
+		mg.indices = &mesh.E(start_index);
+		
 		// Initialize all of the textures for this material
 		cy::TriMesh::Mtl const& mtl = mesh.M(i);
-		// Now let's load the textures for map_Ka, map_Kd, and map_Ks
 		if (mtl.map_Ka.data != nullptr) {
 			const char* path = mtl.map_Ka.data;
-			GLuint tex_id = _init_gl_texture(path);
+			std::string full_path = std::string(asset_path) + std::string(path);
+			GLuint tex_id = _init_gl_texture(full_path);
 			mg.map_Ka_id = tex_id;
 		}
 		if (mtl.map_Kd.data != nullptr) {
 			const char* path = mtl.map_Kd.data;
-			GLuint tex_id = _init_gl_texture(path);
+			std::string full_path = std::string(asset_path) + std::string(path);
+			GLuint tex_id = _init_gl_texture(full_path);
 			mg.map_Kd_id = tex_id;
 		}
 		if (mtl.map_Ks.data != nullptr) {
 			const char* path = mtl.map_Ks.data;
-			GLuint tex_id = _init_gl_texture(path);
+			std::string full_path = std::string(asset_path) + std::string(path);
+			GLuint tex_id = _init_gl_texture(full_path);
 			mg.map_Ks_id = tex_id;
 		}
 		material_groups.push_back(mg);
@@ -447,9 +468,11 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.n_points = mesh.NF() * 3;
 	scene.n_elements = mesh.NE();
 
-	_bind_buffers(mesh);
-	_bind_texture(mesh);
-		
+	//_bind_buffers(mesh);
+	//_bind_texture(mesh);
+	GLuint ebuffer = _bind_buffers(mesh);
+	_init_material_groups_for_ebo(mesh, ebuffer);
+
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
 	scene.point_transform = cy::Matrix4f::RotationX(-PI_OVER_2);
@@ -469,9 +492,9 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
 	
 	scene.program.SetUniform("light_direction", light.direction());
-	scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
-	scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
-	scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
+	//scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
+	//scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
+	//scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
 	scene.program.SetUniform("shininess", 200.0f);
 }
 
@@ -509,6 +532,7 @@ int main(int argc, char** argv)
 	
 	init_window(argc, argv);
 	init_points_from_mesh(mesh);
+	std::cout << "Loaded mesh with " << mesh.NF() << " faces" << std::endl;
 	init_camera();
 	bind_glut_functions();
 

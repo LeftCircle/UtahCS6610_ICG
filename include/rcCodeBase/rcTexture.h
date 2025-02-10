@@ -45,10 +45,21 @@ private:
         }
     }
 
+	void decodeOneStep(const std::string& filename) {
+		unsigned int error = lodepng::decode(_data, _width, _height, filename);
+		if (error) {
+			std::cerr << "Error loading texture: " << lodepng_error_text(error) << std::endl;
+		}
+	}
+
 public:
     Texture(const char* texture_file) {
         decodeOneStep(texture_file);
     }
+
+	Texture(const std::string& texture_file) {
+		decodeOneStep(texture_file);
+	}
 
     unsigned int width() const { return _width; }
     unsigned int height() const { return _height; }
