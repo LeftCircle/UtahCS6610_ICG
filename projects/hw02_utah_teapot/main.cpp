@@ -23,16 +23,6 @@ Usage:
   This project was created with Visual Studio.
   lodepng.cpp is required to load textures.
 
-Notes: 
-	I created this project trying to follow the structure of cyCodeBase. 
-	All of the files in rcCodeBase are .h files, and I am not entirely 
-	pleased with this. 
-	After starting the projects and examples from Donald H. House's Physics
-	Based Animation course,	I got an example of what a clean C++ project 
-	looks like. If I were to redo this project, I would	more strictly adhere
-	to the single responsibility principle and separate the classes into .h
-	and .cpp files.	Having the files split more strictly into a Model-View-Controller
-	structure would have greatly benifited this project.
 */
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -60,7 +50,9 @@ const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
 const char* brick_png_path = "assets\\texture_teapot\\brick.png";
 const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.png";
 
-std::unordered_map<GLuint, GLuint> ebo_to_texture;
+#define NULL_ID -1
+
+std::vector<rc::MaterialGroup> material_groups;
 
 GLScene scene;
 rc::SphericalDirectionalLight light;
@@ -204,6 +196,50 @@ void fn_keyboard(int key, int x, int y)
 	}
 }
 
+void _set_material_flags(rc::MaterialGroup& material_group)
+{
+	bool has_map_Ka = material_group.map_Ka_id != NULL_ID;
+	bool has_map_Kd = material_group.map_Kd_id != NULL_ID;
+	bool has_map_Ks = material_group.map_Ks_id != NULL_ID;
+	scene.program.SetUniform("has_map_Ka", has_map_Ka);
+	scene.program.SetUniform("has_map_Kd", has_map_Kd);
+	scene.program.SetUniform("has_map_Ks", has_map_Ks);
+}
+
+void _set_material_textures(rc::MaterialGroup& material_group)
+{
+	if (material_group.map_Ka_id != NULL_ID)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, material_group.map_Ka_id);
+		scene.program.SetUniform("map_Ka", material_group.map_Ka_id);
+	}
+	if (material_group.map_Kd_id != NULL_ID)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, material_group.map_Kd_id);
+		scene.program.SetUniform("map_Kd", material_group.map_Kd_id);
+	}
+	if (material_group.map_Ks_id != NULL_ID)
+	{
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, material_group.map_Ks_id);
+		scene.program.SetUniform("map_Ks", material_group.map_Ks_id);
+	}
+}
+
+
+void _render_material_group(rc::MaterialGroup& material_group)
+{
+	_set_material_flags(material_group);
+	_set_material_textures(material_group);
+
+	// TODO -> set standard ka/kd/ks 
+	// We need the material from the tri mesh for this.
+
+	glDrawElements(GL_TRIANGLES, material_group.ebuffer_id, GL_UNSIGNED_INT, 0);
+}
+
 // Renders the scene by using glDrawElements to reduce the amount of data that has
 // to be sent to the GPU
 void render(void)
@@ -339,7 +375,7 @@ void _bind_texture(rc::rcTriMeshForGL& mesh)
 	scene.program["specular_map"] = 1;
 }
 
-GLuint _initialize_gl_texture(const char* path) {
+GLuint _cy_initialize_gl_texture(const char* path) {
 	Texture new_texture(path);
 	cyGLTexture2D tex;
 	tex.Initialize();
@@ -350,9 +386,29 @@ GLuint _initialize_gl_texture(const char* path) {
 	return tex.GetID();
 }
 
-void _bind_ebo_and_tex_for_multiple_materials(rc::rcTriMeshForGL& mesh, std::vector<GLuint>& ebos) {
-	int n_textures = mesh.NM();
-	for (int i = 0; i < n_textures; i++) { 
+GLuint _init_gl_texture(const char* path) {
+	Texture new_texture(path);
+	GLuint tex_id;
+	glGenTextures(1, &tex_id);
+	glBindTexture(GL_TEXTURE_2D, tex_id);
+	// Set the texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// Load the texture
+	unsigned int w = new_texture.width();
+	unsigned int h = new_texture.height();
+	const unsigned char* data = new_texture.data_const_ptr();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	return tex_id;
+}
+
+void _bind_ebo_and_tex_for_multiple_materials(rc::rcTriMeshForGL& mesh) {
+	int n_materials = mesh.NM();
+	for (int i = 0; i < n_materials; i++) {
+		rc::MaterialGroup mg;
+		mg.material_index = i;
+
+		// Initialize the element array buffer for this material
 		GLuint ebuffer;
 		glGenBuffers(1, &ebuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuffer);
@@ -361,16 +417,27 @@ void _bind_ebo_and_tex_for_multiple_materials(rc::rcTriMeshForGL& mesh, std::vec
 		int n_indices = mesh.GetMaterialFaceCount(i) * 3;
 		int start_index = first_face * 3;
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * n_indices, &mesh.E(start_index), GL_STATIC_DRAW);
-		ebos.push_back(ebuffer);
+		mg.ebuffer_id = ebuffer;
 
-		// We still need the texture for this material so that we can bind the texture to the shader
-		// when it is time to draw these elements. 
-		int material = mesh.GetMaterialIndex(first_face);
-
-		// now we have to build and bind the textures for this material, and add it to the map
-		const char* path = "";
-		GLuint tex_id = _initialize_gl_texture(path);
-		ebo_to_texture[ebuffer] = tex_id;
+		// Initialize all of the textures for this material
+		cy::TriMesh::Mtl const& mtl = mesh.M(i);
+		// Now let's load the textures for map_Ka, map_Kd, and map_Ks
+		if (mtl.map_Ka.data != nullptr) {
+			const char* path = mtl.map_Ka.data;
+			GLuint tex_id = _init_gl_texture(path);
+			mg.map_Ka_id = tex_id;
+		}
+		if (mtl.map_Kd.data != nullptr) {
+			const char* path = mtl.map_Kd.data;
+			GLuint tex_id = _init_gl_texture(path);
+			mg.map_Kd_id = tex_id;
+		}
+		if (mtl.map_Ks.data != nullptr) {
+			const char* path = mtl.map_Ks.data;
+			GLuint tex_id = _init_gl_texture(path);
+			mg.map_Ks_id = tex_id;
+		}
+		material_groups.push_back(mg);
 	} 
 }
 

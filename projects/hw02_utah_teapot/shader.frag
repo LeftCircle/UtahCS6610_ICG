@@ -7,40 +7,61 @@ in vec3 vViewSpacePos;
 in vec2 vTexCoord;
 
 uniform sampler2D tex;
-uniform sampler2D specular_map;
+
+// Flags to see if the different textures exist
+uniform bool has_map_Ka;
+uniform bool has_map_Kd;
+uniform bool has_map_Ks;
+
+// textures
+uniform sampler2D map_Ka;
+uniform sampler2D map_Kd;
+uniform sampler2D map_Ks;
+
+// colors
+uniform vec3 Ka;
+uniform vec3 Kd;
+uniform vec3 Ks;
+
 
 // Light direction might have to be passed by the vertex shader to 
 // be interpolated. But with directional light, it should be fine. 
 uniform vec3 light_direction;
-
-uniform vec3 intensity_k_diffuse;
-uniform vec3 intensity_k_specular;
-uniform vec3 intensity_k_ambient;
-
 uniform float shininess;
 
 void main()
 {
-	// Texture
-	vec4 texColor = texture(tex, vTexCoord);
-	vec4 specularColor = texture(specular_map, vTexCoord);
+	// start by loading the textures
+	vec4 ambient = vec4(1.0);
+	vec4 diffuse = vec4(1.0); 
+	vec4 specular = vec4(1.0);
+	if (has_map_Ka) {
+		ambient = texture(map_Ka, vTexCoord);
+	}
+	if (has_map_Kd) {
+		diffuse = texture(map_Kd, vTexCoord);
+	}
+	if (has_map_Ks) {
+		specular = texture(map_Ks, vTexCoord);
+	}
 
-	vec3 diffuse = intensity_k_diffuse * texColor.rgb;
-	vec3 specular = intensity_k_specular * specularColor.rgb;
-	vec3 ambient = intensity_k_ambient * texColor.rgb;
+	// Now adjust for ka, kd, ks
+	ambient.rgb *= Ka;
+	diffuse.rgb *= Kd;
+	specular.rgb *= Ks;
 
 	// Shading
 	vec3 N = normalize(vNormal);
 	vec3 omega = normalize(-light_direction);
 	vec3 view_direction = normalize(-vViewSpacePos);
 	vec3 h = normalize(omega + view_direction);
-	
-	vec3 diffuse_shade = diffuse * max(dot(N, omega), 0.0);
-	vec3 specular_shade = specular * pow(max(dot(N, h), 0.0), shininess);
+
+	vec3 diffuse_shade = diffuse.rgb * max(dot(N, omega), 0.0);
+	vec3 specular_shade = specular.rgb * pow(max(dot(N, h), 0.0), shininess);
 	if (dot(N, omega) < 0.0)
 	{
 		specular_shade = vec3(0.0);
 	}
-	vec3 color = ambient + diffuse_shade + specular_shade;
+	vec3 color = ambient.rgb + diffuse_shade + specular_shade;
 	fragColor = vec4(color, 1.0);
 }

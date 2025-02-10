@@ -36,6 +36,39 @@ TEST(TestcyTriMesh, TestMultipleMaterials) {
 	EXPECT_EQ(27720, m0_face_count);
 }
 
+TEST(TestcyTriMesh, TestGetobjMaterials) {
+	// Tests getting the materials and images from cyTriMesh. 
+	cy::TriMesh test_mesh;
+	bool loaded = test_mesh.LoadFromFileObj(yoda_path);
+	EXPECT_TRUE(loaded);
+	if (loaded) {
+		bool found_head = false;
+		// Check that we can grab the path to the yoda-head.png 
+		unsigned int nm = test_mesh.NM();
+		for (int i = 0; i < nm; i++) {
+			cy::TriMesh::Mtl mtl = test_mesh.M(i);
+			char* mtl_name = mtl.name.data;
+			// convert the char*data to a string
+			std::string mtl_name_str(mtl_name);
+			if (mtl_name_str == "Head") {
+				found_head = true;
+				// Now see if we can find the image path
+				char* image_path = mtl.map_Kd.data;
+				std::string image_path_str(image_path);
+				std::string expected = "yoda-head.png";
+				EXPECT_EQ(expected, image_path_str);
+			}
+			if (mtl_name_str == "Limbs") {
+				// There is no mapo_Ks for this material, so we should know that somehow.
+				char* ks_path = mtl.map_Ks.data;
+				// Check to see that ks_path is null
+				EXPECT_EQ(nullptr, ks_path);
+			}
+		}
+		EXPECT_TRUE(found_head);
+	}
+}
+
 TEST(TestcyTriMesh, TestBreakUpBuffersByMaterial) {
 	rc::rcTriMeshForGL test_mesh;
 	bool loaded = test_mesh.LoadFromFileObj(yoda_path);
