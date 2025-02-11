@@ -16,6 +16,7 @@ namespace rc
 		int n_indices;
 		int start_index;
 		const void* indices; // might not be used
+		GLuint vao_id;
 		GLuint ebuffer_id;
 		GLuint map_Ka_id;
 		GLuint map_Kd_id;
@@ -27,6 +28,7 @@ namespace rc
 			material_index = -1;
 			n_indices = 0;
 			indices = nullptr;
+			vao_id = -1;
 			ebuffer_id = -1;
 			map_Ka_id = -1;
 			map_Kd_id = -1;

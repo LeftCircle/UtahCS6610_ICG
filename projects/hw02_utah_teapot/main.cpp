@@ -8,9 +8,6 @@ This program demonstrates:
   - A light that can be rotated around the object
 
 Keyboard functionality:
-  - a: Toggle ambient lighting
-  - s: Toggle specular lighting
-  - d: Toggle diffuse lighting
   - F6: Recompile shaders
   - ESC: Close the window
   - Arrow keys: Rotate the light
@@ -45,19 +42,19 @@ Usage:
 
 using namespace rc;
 
-const char* default_obj_path = "yoda/yoda.obj";
-const char* filename;
-const char* material_filename = "assets\\texture_teapot\\teapot.mtl";
-const char* brick_png_path = "assets\\texture_teapot\\brick.png";
-const char* brick_specular_png_path = "assets\\texture_teapot\\brick-specular.png";
-const char* asset_path = "yoda\\";
-
-std::filesystem::path dir = std::filesystem::current_path();
-
 #define NULL_ID -1
 
-std::vector<rc::MaterialGroup> material_groups;
+//const char* default_obj_path = "yoda/yoda.obj";
+//const char* asset_path = "yoda\\";
+const char* default_obj_path = "teapot.obj";
+const char* asset_path = "";
 
+const char* filename;
+
+GLuint test_global_vao = NULL_ID;
+
+std::filesystem::path dir = std::filesystem::current_path();
+std::vector<rc::MaterialGroup> material_groups;
 GLScene scene;
 rc::SphericalDirectionalLight light;
 
@@ -120,54 +117,6 @@ void keyboard(unsigned char key, int x, int y)
 	if (key == 27)
 	{
 		glutLeaveMainLoop();
-	}
-	// if A key is pressed, either disable or enable ambient lighting
-	if (key == 'a')
-	{
-		if (shading_flag & ShadingType::AMBIENT)
-		{
-			shading_flag &= ~ShadingType::AMBIENT;
-			scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(0.0f, 0.0f, 0.0f));
-		}
-		else
-		{
-			shading_flag |= ShadingType::AMBIENT;
-			rcTriMeshForGL* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_ambient", cy::Vec3f(mesh->M(0).Ka));
-		}
-	}
-	if (key == 's')
-	{
-		if (shading_flag & ShadingType::SPECULAR)
-		{
-			shading_flag &= ~ShadingType::SPECULAR;
-			scene.program.SetUniform("intensity_k_specular", cy::Vec3f(0.0f, 0.0f, 0.0f));
-		}
-		else
-		{
-			shading_flag |= ShadingType::SPECULAR;
-			rcTriMeshForGL* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_specular",cy::Vec3f(mesh->M(0).Ks));
-		}
-	}
-	if (key == 'd')
-	{
-		if (shading_flag & ShadingType::DIFFUSE)
-		{
-			shading_flag &= ~ShadingType::DIFFUSE;
-			scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(0.0f, 0.0f, 0.0f));
-		}
-		else
-		{
-			shading_flag |= ShadingType::DIFFUSE;
-			rcTriMeshForGL* mesh = scene.get_mesh();
-			scene.program.SetUniform("intensity_k_diffuse", cy::Vec3f(mesh->M(0).Kd));
-		}
-	}
-
-	if (key == 'a' || key == 's' || key == 'd')
-	{
-		glutPostRedisplay();
 	}
 }
 
@@ -259,14 +208,15 @@ void _render_material_group(rc::MaterialGroup& material_group, rc::rcTriMeshForG
 // to be sent to the GPU
 void render(void)
 {
+	glBindVertexArray(test_global_vao);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	rc::rcTriMeshForGL& mesh = *scene.get_mesh();
 	int n_material_groups = material_groups.size();
-	scene.set_mvp_and_update_uniforms();
-	for (int i = 0; i < n_material_groups; i++)
+	for (MaterialGroup& material_group : material_groups)
 	{
-		_render_material_group(material_groups[i], mesh);
+		_render_material_group(material_group, mesh);
 	}
+	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
 
@@ -347,6 +297,7 @@ GLuint _bind_buffers(rc::rcTriMeshForGL& mesh)
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+	test_global_vao = vao;
 
 	std::vector<GLuint> v_n_t;
 	_bind_VNT_buffers(mesh, v_n_t);
@@ -365,36 +316,6 @@ GLuint _bind_buffers(rc::rcTriMeshForGL& mesh)
 	scene.program.SetAttribBuffer("textCoord", v_n_t[2], 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
 	return ebuffer;
-}
-
-// This was the hardcoded method for binding one teapot texture
-void _bind_texture(rc::rcTriMeshForGL& mesh)
-{
-	// Load the texture
-	Texture texture(brick_png_path);
-
-	cyGLTexture2D tex;
-	tex.Initialize();
-	tex.SetImage(texture.data_const_ptr(), 4, texture.width(), texture.height());
-	tex.BuildMipmaps();
-	tex.Bind(0);
-	scene.program["tex"] = 0;
-
-	// Now for the material parts
-	cy::TriMesh::Mtl const& mtl = mesh.M(0);
-	scene.program["intensity_k_diffuse"] = cy::Vec3f(mtl.Kd[0], mtl.Kd[1], mtl.Kd[2]);
-	scene.program["intensity_k_ambient"] = cy::Vec3f(mtl.Ka[0], mtl.Ka[1], mtl.Ka[2]);
-	scene.program["intensity_k_specular"] = cy::Vec3f(mtl.Ks[0], mtl.Ks[1], mtl.Ks[2]);
-	scene.program["shininess"] = mtl.Ns;
-
-	// Load the specular map
-	Texture specular_texture(brick_specular_png_path);
-	cyGLTexture2D spec_tex;
-	spec_tex.Initialize();
-	spec_tex.SetImage(specular_texture.data_const_ptr(), 4, specular_texture.width(), specular_texture.height());
-	spec_tex.BuildMipmaps();
-	spec_tex.Bind(1);
-	scene.program["specular_map"] = 1;
 }
 
 GLuint _cy_initialize_gl_texture(const char* path) {
