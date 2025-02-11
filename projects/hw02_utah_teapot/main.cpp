@@ -44,10 +44,12 @@ using namespace rc;
 
 #define NULL_ID -1
 
-//const char* default_obj_path = "yoda/yoda.obj";
-//const char* asset_path = "yoda\\";
-const char* default_obj_path = "teapot.obj";
+const char* default_obj_path = "yoda.obj";
+//const char* asset_path = "";
+//const char* default_obj_path = "teapot.obj";
 const char* asset_path = "";
+const float scale = 0.01f;
+
 
 const char* filename;
 
@@ -210,13 +212,14 @@ void render(void)
 {
 	glBindVertexArray(test_global_vao);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	scene.set_mvp_and_update_uniforms();
+	
 	rc::rcTriMeshForGL& mesh = *scene.get_mesh();
-	int n_material_groups = material_groups.size();
 	for (MaterialGroup& material_group : material_groups)
 	{
 		_render_material_group(material_group, mesh);
 	}
-	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
 
@@ -397,12 +400,16 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	// Some final point transformations 
 	// Rotate the points to sit on the +y axis
 	scene.point_transform = cy::Matrix4f::RotationX(-PI_OVER_2);
+	// Scale the points
+	
 
 	// Center the object using the bounding box
 	mesh.ComputeBoundingBox();
 	cy::Vec3f bounding_box_center = (mesh.GetBoundMin() + mesh.GetBoundMax()) / 2.0f;
 	bounding_box_center = cy::Vec3f(cy::Matrix4f::RotationX(-PI_OVER_2) * bounding_box_center);
 	scene.point_transform.AddTranslation(-bounding_box_center);
+	const cy::Vec3f scale_v3f = cy::Vec3f(1.0f, 1.0f, 1.0f) * scale;
+	scene.point_transform.SetScale(scale_v3f);
 
 	// Add some lights!
 	mesh.set_k(1.0f, 0.0, 0.0);
@@ -420,7 +427,7 @@ void init_camera()
 {
 	// getting the projection matrix
 	float aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
-	scene.camera.set_perspective_projection(90, aspect_ratio, 1.0f, 50.0f);
+	scene.camera.set_perspective_projection(90, aspect_ratio, 1.0f, 500.0f);
 
 	cy::Vec3f camera_pos = cy::Vec3f(0.0f, 0.0f, 30.0f);
 	cy::Vec3f up = cy::Vec3f(0.0, 1.0, 0.0);
