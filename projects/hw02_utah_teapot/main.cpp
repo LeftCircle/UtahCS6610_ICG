@@ -216,19 +216,20 @@ void _set_material_textures(rc::MaterialGroup& material_group)
 	{
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material_group.map_Ka_id);
-		scene.program.SetUniform("map_Ka", material_group.map_Ka_id);
+		// 0 is the texture unit
+		scene.program.SetUniform("map_Ka", 0);
 	}
 	if (material_group.map_Kd_id != NULL_ID)
 	{
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, material_group.map_Kd_id);
-		scene.program.SetUniform("map_Kd", material_group.map_Kd_id);
+		scene.program.SetUniform("map_Kd", 1);
 	}
 	if (material_group.map_Ks_id != NULL_ID)
 	{
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, material_group.map_Ks_id);
-		scene.program.SetUniform("map_Ks", material_group.map_Ks_id);
+		scene.program.SetUniform("map_Ks", 2);
 	}
 }
 
@@ -261,12 +262,11 @@ void render(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	rc::rcTriMeshForGL& mesh = *scene.get_mesh();
 	int n_material_groups = material_groups.size();
+	scene.set_mvp_and_update_uniforms();
 	for (int i = 0; i < n_material_groups; i++)
 	{
 		_render_material_group(material_groups[i], mesh);
 	}
-	//glDrawElements(GL_TRIANGLES, scene.n_elements, GL_UNSIGNED_INT, 0);
-	scene.set_mvp_and_update_uniforms();
 	glutSwapBuffers();
 }
 
@@ -367,6 +367,7 @@ GLuint _bind_buffers(rc::rcTriMeshForGL& mesh)
 	return ebuffer;
 }
 
+// This was the hardcoded method for binding one teapot texture
 void _bind_texture(rc::rcTriMeshForGL& mesh)
 {
 	// Load the texture
@@ -468,8 +469,7 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	scene.n_points = mesh.NF() * 3;
 	scene.n_elements = mesh.NE();
 
-	//_bind_buffers(mesh);
-	//_bind_texture(mesh);
+	
 	GLuint ebuffer = _bind_buffers(mesh);
 	_init_material_groups_for_ebo(mesh, ebuffer);
 
@@ -492,9 +492,6 @@ void init_points_from_mesh(rc::rcTriMeshForGL& mesh)
 	light.set_diffuse_intensity(cy::Vec3f(0.85f));
 	
 	scene.program.SetUniform("light_direction", light.direction());
-	//scene.program.SetUniform("intensity_k_diffuse", light.diffuse_intensity() * mesh.get_k_vec3f());
-	//scene.program.SetUniform("intensity_k_ambient", light.ambient_intensity() * mesh.get_k_vec3f());
-	//scene.program.SetUniform("intensity_k_specular", light.specular_intensity() * mesh.get_k_vec3f());
 	scene.program.SetUniform("shininess", 200.0f);
 }
 
