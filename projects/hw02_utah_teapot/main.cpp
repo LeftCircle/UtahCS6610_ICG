@@ -44,10 +44,10 @@ using namespace rc;
 
 #define NULL_ID -1
 
-const char* default_obj_path = "yoda.obj";
-//const char* asset_path = "";
+const char* default_obj_path = "yoda//yoda.obj";
+const char* asset_path = "yoda//";
 //const char* default_obj_path = "teapot.obj";
-const char* asset_path = "";
+//const char* asset_path = "";
 const float scale = 0.01f;
 
 
