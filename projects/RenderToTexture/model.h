@@ -1,11 +1,17 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <GL/glew.h>
+#include <GL/freeglut.h>
+#include <vector>
+
+
 #include "cyCodeBase/cyVector.h"
 #include "cyCodeBase/cyMatrix.h"
+#include "cyCodeBase/cyGL.h"
 #include "rcCodeBase/rcObjModifier.h"
 
-#include <vector>
+
 
 // Plane vertices (position and texture coordinates)
 const float planeVertices[] = {
@@ -23,11 +29,22 @@ const unsigned int planeIndices[] = {
 
 class Model{
 private:
-	std::vector<rc::rcTriMeshForGL> meshes;
+	std::vector<rc::rcTriMeshForGL> _meshes;
+    std::vector<std::vector<rc::MaterialGroup>> _materials;
+    std::vector<cyMatrix4f> _transforms;
+
 
 public:
-	Model();
-	bool load_model(std::string filename);
+	
+
+private:
+    void _init_points_from_mesh(rc::rcTriMeshForGL& mesh);
+
+public:
+    Model();
+	
+    bool load_model(const char* filename);
+
 
 }
 

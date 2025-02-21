@@ -168,6 +168,9 @@ void _set_material_textures(rc::MaterialGroup& material_group)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material_group.map_Ka_id);
 		// 0 is the texture unit
+		// NOTE -> This step is unnecessary and we can init the material uniforms
+		// with scene.program.SetUniform("map_Ka", 0);
+		//scene.program.SetUniform("map_Kd", 1);, etc and only call the glActive/Bind
 		scene.program.SetUniform("map_Ka", 0);
 	}
 	if (material_group.map_Kd_id != NULL_ID)
